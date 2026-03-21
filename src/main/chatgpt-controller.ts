@@ -51,7 +51,7 @@ function clearTextScript(selectors: string[]): string {
 
 async function exec(script: string): Promise<unknown> {
   const win = getChatGptWindow()
-  if (!win) return null
+  if (!win || win.isDestroyed() || win.webContents.isDestroyed()) return null
   return win.webContents.executeJavaScript(script)
 }
 
