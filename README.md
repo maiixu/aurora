@@ -47,10 +47,10 @@ The EC2 instance must run `whisper-server` (whisper.cpp), default port 8080.
 
 ### 3. Karabiner Elements
 
-Install [Karabiner Elements](https://karabiner-elements.pqrs.org/) and copy config from dotfiles:
+Install [Karabiner Elements](https://karabiner-elements.pqrs.org/) and copy config from your dotfiles:
 
 ```bash
-cp ~/code/dotfiles/karabiner/karabiner.json ~/.config/karabiner/karabiner.json
+cp <your-dotfiles>/karabiner/karabiner.json ~/.config/karabiner/karabiner.json
 ```
 
 The rule maps Dictation key → `right_option` on every press. Aurora toggles recording on each press.
@@ -71,10 +71,12 @@ Symlink from dotfiles and edit to taste:
 
 ```bash
 mkdir -p ~/.aurora
-ln -sf ~/code/dotfiles/aurora/dictionary.txt ~/.aurora/dictionary.txt
+ln -sf <your-dotfiles>/aurora/dictionary.txt ~/.aurora/dictionary.txt
+# or just create it directly:
+# touch ~/.aurora/dictionary.txt
 ```
 
-Format (`~/code/dotfiles/aurora/dictionary.txt`):
+Format (`~/.aurora/dictionary.txt`):
 
 ```
 Claude, Claude Code, Cursor, Obsidian, TypeScript, Karabiner, macOS, EC2
@@ -101,7 +103,7 @@ npm run build     # production .app
 |---|---|
 | EC2 SSH key | `~/.ssh/` |
 | SSH host config | `~/.ssh/config` |
-| Karabiner config | `~/code/dotfiles/` |
-| Dictionary | `~/code/dotfiles/aurora/dictionary.txt` |
+| Karabiner config | your dotfiles repo |
+| Dictionary | `~/.aurora/dictionary.txt` (symlink to dotfiles or standalone) |
 
 No API keys, no passwords, no tokens are stored in this repo.
