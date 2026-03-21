@@ -1,33 +1,36 @@
 import { app } from 'electron'
 import { createTray } from './tray'
-import { createHudWindow, showHud, hideHud } from './hud-window'
+import { createHudWindow } from './hud-window'
+import { registerIpcHandlers, wireStateMachineToIpc } from './ipc-handlers'
+import { fsm } from './state-machine'
+import { AppState } from '../shared/types'
 
 // Hide from Dock — menu bar only app
 app.dock?.hide()
 
-// Prevent multiple instances
 if (!app.requestSingleInstanceLock()) {
   app.quit()
   process.exit(0)
 }
 
 app.whenReady().then(() => {
-  // Pre-create HUD at startup (avoids latency on hotkey press)
   createHudWindow()
+  registerIpcHandlers()
+  wireStateMachineToIpc()
 
   createTray((debugState) => {
-    console.log('[debug] state triggered:', debugState)
-    if (debugState === 'IDLE') {
-      hideHud()
-    } else {
-      showHud()
+    switch (debugState as AppState) {
+      case AppState.LISTENING:  fsm.startListening(); break
+      case AppState.PROCESSING: fsm.stopListening(); break
+      case AppState.READY:      fsm.textReceived('Hello from Aurora debug'); break
+      case AppState.CANCELLED:  fsm.cancel(); break
+      case AppState.IDLE:       /* auto transitions handle this */ break
     }
-    // Will be fully wired to state machine in feat/state-machine
   })
 
   console.log('[aurora] ready — menu bar icon active')
 })
 
 app.on('window-all-closed', () => {
-  // Keep running even with no windows — it's a menu bar app
+  // Keep running even with no visible windows — it's a menu bar app
 })
