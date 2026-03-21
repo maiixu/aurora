@@ -93,17 +93,23 @@ export async function stopVoiceInput(): Promise<void> {
 function pollForTranscription() {
   const deadline = Date.now() + POLL_TIMEOUT_MS
   const script = readTextScript(CHATGPT_TEXTAREA_SELECTORS)
+  let pollCount = 0
 
   const tick = async () => {
     if (Date.now() > deadline) {
-      console.warn('[chatgpt] transcription timeout')
+      console.warn('[chatgpt] transcription timeout after', pollCount, 'polls')
       fsm.timeout()
       return
     }
 
     const text = await exec(script)
+    pollCount++
+    if (pollCount <= 3 || pollCount % 5 === 0) {
+      console.log(`[chatgpt] poll #${pollCount} textarea value:`, JSON.stringify(text))
+    }
+
     if (text && typeof text === 'string' && text.length > 0) {
-      // Clear the textarea so it's ready for next use
+      console.log('[chatgpt] got transcript:', text)
       await exec(clearTextScript(CHATGPT_TEXTAREA_SELECTORS))
       fsm.textReceived(text)
     } else {
