@@ -124,6 +124,8 @@ export const myAppPaster: Paster = {
 | Variable | Default | Purpose |
 |---|---|---|
 | `AURORA_SSH_HOST` | `mac-ec2` | SSH config alias for EC2 whisper server |
+| `AURORA_WHISPER_PORT` | `8080` | Remote whisper-server port on EC2 |
+| `AURORA_DEVTOOLS` | unset | Set to any value to enable Chrome DevTools on port 9222 (dev only) |
 
 ## macOS permissions
 
@@ -136,6 +138,14 @@ export const myAppPaster: Paster = {
 ## Development learnings
 
 Accumulated troubleshooting notes, paste strategy decisions, and AppleScript gotchas are in **[PROGRESS.md](PROGRESS.md)**. Read it before debugging paste issues or adding a new app paster. Update it whenever a non-obvious problem is solved.
+
+## Security invariants (don't break these)
+
+- **DevTools** are gated on `AURORA_DEVTOOLS` env var — never re-enable by default
+- **`/tmp` logging** must not contain transcribed text or app names — world-readable
+- **EC2 port 8080** must not be exposed in Security Group — tunnel only
+- **SSH key** for EC2 must be a dedicated `aurora_ec2` key, not shared/course keys
+- **Paste path**: all osascript runs from Aurora's main process — child processes don't inherit Accessibility trust
 
 ## Key design decisions (don't re-litigate without good reason)
 

@@ -26,14 +26,18 @@ npm install
 
 ### 2. EC2 whisper server
 
-Aurora connects via SSH tunnel. Configure your SSH host:
+Aurora connects via SSH tunnel. Generate a dedicated key and configure your SSH host:
 
 ```bash
+# Generate a dedicated key (don't reuse course or shared keys)
+ssh-keygen -t ed25519 -f ~/.ssh/aurora_ec2 -C "aurora@mac"
+ssh-copy-id -i ~/.ssh/aurora_ec2.pub <ec2-user>@<your-EC2-IP>
+
 # Add to ~/.ssh/config:
 Host mac-ec2
   HostName <your-EC2-IP>
   User <ec2-user|ubuntu|...>
-  IdentityFile ~/.ssh/your-key.pem
+  IdentityFile ~/.ssh/aurora_ec2
 ```
 
 To use a different alias or port:
@@ -93,17 +97,25 @@ cloud = Claude
 ### 6. Run
 
 ```bash
-npm run dev       # development
-npm run build     # production .app
+npm run dev                    # development (DevTools disabled by default)
+AURORA_DEVTOOLS=1 npm run dev  # enable Chrome DevTools on port 9222
+npm run build                  # production .app
 ```
 
 ## Secrets / what's NOT in this repo
 
 | Secret | Location |
 |---|---|
-| EC2 SSH key | `~/.ssh/` |
+| EC2 SSH key | `~/.ssh/aurora_ec2` |
 | SSH host config | `~/.ssh/config` |
 | Karabiner config | your dotfiles repo |
 | Dictionary | `~/.aurora/dictionary.txt` (symlink to dotfiles or standalone) |
 
 No API keys, no passwords, no tokens are stored in this repo.
+
+## Security notes
+
+- **EC2 Security Group**: only SSH (22) should be open inbound. Port 8080 (whisper-server) must NOT be exposed to the internet — Aurora reaches it via SSH tunnel only.
+- **SSH key**: use a dedicated `aurora_ec2` key, not a shared or course key.
+- **DevTools**: disabled by default in dev mode. Enable explicitly with `AURORA_DEVTOOLS=1`.
+- **Paste trust chain**: Aurora pastes text from EC2 directly into the focused app. If EC2 is compromised, arbitrary text could be injected. Keep the EC2 instance locked down.
