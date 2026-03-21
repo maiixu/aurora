@@ -5,12 +5,13 @@ Ghost voice-injection for macOS. Press Dictation key → mic records → press a
 ## How it works
 
 ```
-Hold Dictation key (400ms)
-  → green dot appears (LISTENING)
-Release key
+Press Dictation key
+  → green dot appears (LISTENING) — recording starts
+Press again
   → dot spins (PROCESSING) — audio sent to EC2 whisper via SSH tunnel
 Transcription arrives
   → dot flashes green (READY) — text pasted into focused app
+Esc at any point → cancel (red dot)
 ```
 
 ## New machine setup
@@ -25,21 +26,19 @@ npm install
 
 ### 2. EC2 whisper server
 
-Aurora connects via SSH tunnel. Set your SSH host:
+Aurora connects via SSH tunnel. Configure your SSH host:
 
 ```bash
-# Option A: use the default alias
 # Add to ~/.ssh/config:
 Host mac-ec2
   HostName <your-EC2-IP>
   User ec2-user
   IdentityFile ~/.ssh/your-key.pem
-
-# Option B: override via env var
-export AURORA_SSH_HOST=my-other-host
 ```
 
-The EC2 instance must be running `whisper-server` (whisper.cpp) on port 8080.
+To use a different alias: `export AURORA_SSH_HOST=my-host`
+
+The EC2 instance must run `whisper-server` (whisper.cpp) on port 8080.
 
 ### 3. Karabiner Elements
 
@@ -49,23 +48,29 @@ Install [Karabiner Elements](https://karabiner-elements.pqrs.org/) and copy conf
 cp ~/code/dotfiles/karabiner/karabiner.json ~/.config/karabiner/karabiner.json
 ```
 
-The rule maps: `Dictation key → f5 → right_option (hold 400ms)`. Aurora listens for `right_option`.
+The rule maps Dictation key → `right_option` on every press. Aurora toggles recording on each press.
 
 ### 4. macOS permissions
 
-Grant these in **System Settings → Privacy & Security**:
+Grant in **System Settings → Privacy & Security**:
 
 | Permission | Why |
 |---|---|
 | **Microphone** | Record audio (prompted on first launch) |
-| **Input Monitoring** | Global hotkey detection (uiohook-napi) |
-| **Accessibility** | Paste text into apps |
+| **Input Monitoring** | Global hotkey via uiohook-napi |
+| **Accessibility** | Paste text into apps via UI scripting |
 
-For Accessibility, add both:
-- The Electron app (`Electron` or `Aurora` in the list)
-- `paste-helper` binary: `aurora/paste-helper`
+### 5. Vocabulary (optional)
 
-### 5. Run
+Create `~/.aurora/prompt.txt` with terms whisper should recognise correctly:
+
+```
+Claude, Cursor, Obsidian, TypeScript, Karabiner, macOS, EC2
+```
+
+Whisper uses this as an initial prompt to bias spelling toward these words. Edit anytime — loaded fresh on every transcription.
+
+### 6. Run
 
 ```bash
 npm run dev       # development
@@ -79,15 +84,6 @@ npm run build     # production .app
 | EC2 SSH key | `~/.ssh/` |
 | SSH host config | `~/.ssh/config` |
 | Karabiner config | `~/code/dotfiles/` |
+| Vocabulary prompt | `~/.aurora/prompt.txt` |
 
 No API keys, no passwords, no tokens are stored in this repo.
-
-## Rebuilding paste-helper
-
-The `paste-helper` binary must be compiled on the target machine (arm64):
-
-```bash
-swiftc paste-helper.swift -o paste-helper
-```
-
-Then add the new binary to System Settings → Accessibility.

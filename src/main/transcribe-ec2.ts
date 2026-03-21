@@ -1,36 +1,58 @@
 import { EC2_WHISPER_PORT } from './whisper-tunnel'
+import { readFileSync } from 'fs'
+import { homedir } from 'os'
+import { join } from 'path'
+
+// Optional vocabulary prompt: ~/.aurora/prompt.txt
+// Whisper uses it as an initial prompt to bias recognition toward these words/spellings.
+// Format: comma-separated terms or natural prose, e.g.:
+//   Claude, Cursor, Obsidian, TypeScript, Karabiner, macOS, EC2
+function loadPrompt(): string {
+  try {
+    return readFileSync(join(homedir(), '.aurora', 'prompt.txt'), 'utf-8').trim()
+  } catch {
+    return ''
+  }
+}
 
 export async function transcribeWithEc2Whisper(wavBuffer: Buffer): Promise<string> {
+  const prompt = loadPrompt()
+
   // Build multipart/form-data manually — no fetch FormData in Node.js without extra deps
   const boundary = `----aurora${Date.now()}`
   const CRLF = '\r\n'
 
-  const header = [
+  const parts: string[] = [
     `--${boundary}`,
     'Content-Disposition: form-data; name="file"; filename="audio.wav"',
     'Content-Type: audio/wav',
-    '',
-    '',
-  ].join(CRLF)
+    '', '',
+  ]
 
-  const footer = [
+  const footer: string[] = [
     '',
     `--${boundary}`,
     'Content-Disposition: form-data; name="response_format"',
-    '',
-    'json',
+    '', 'json',
     `--${boundary}`,
     'Content-Disposition: form-data; name="language"',
-    '',
-    'auto',
-    `--${boundary}--`,
-    '',
-  ].join(CRLF)
+    '', 'auto',
+  ]
+
+  if (prompt) {
+    footer.push(
+      `--${boundary}`,
+      'Content-Disposition: form-data; name="prompt"',
+      '', prompt,
+    )
+  }
+
+  footer.push(`--${boundary}--`, '')
 
   const body = Buffer.concat([
-    Buffer.from(header, 'utf-8'),
+    Buffer.from(parts.join(CRLF), 'utf-8'),
     wavBuffer,
-    Buffer.from(footer, 'utf-8'),
+    Buffer.from(footer.join(CRLF), 'utf-8'),
   ])
 
   const res = await fetch(`http://localhost:${EC2_WHISPER_PORT}/inference`, {
