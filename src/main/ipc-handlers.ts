@@ -3,6 +3,7 @@ import { IPC, AppState } from '../shared/types'
 import { fsm } from './state-machine'
 import { getHudWindow, showHud, hideHud } from './hud-window'
 import { startVoiceInput, stopVoiceInput } from './chatgpt-controller'
+import { showChatGptForRecording, hideChatGptWindow } from './chatgpt-window'
 
 export function registerIpcHandlers() {
   // HUD renderer signals it has loaded
@@ -40,9 +41,12 @@ export function wireStateMachineToIpc() {
     broadcastState(to)
 
     if (to === AppState.LISTENING) {
+      showChatGptForRecording()
       startVoiceInput().catch(console.error)
     } else if (to === AppState.PROCESSING) {
       stopVoiceInput().catch(console.error)
+    } else if (to === AppState.READY || to === AppState.CANCELLED) {
+      hideChatGptWindow()
     }
   })
 }

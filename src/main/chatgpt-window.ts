@@ -39,11 +39,25 @@ export function getChatGptWindow(): BrowserWindow | null {
 
 /** Move the ChatGPT window on-screen so the user can log in. */
 export function showChatGptForLogin() {
-  chatgptWin?.setPosition(100, 100)
-  chatgptWin?.focus()
+  if (!chatgptWin || chatgptWin.isDestroyed()) return
+  chatgptWin.show()
+  chatgptWin.setPosition(100, 100)
+  chatgptWin.focus()
 }
 
-/** Return the ChatGPT window to off-screen position. */
+/**
+ * Make the ChatGPT window "active" for audio capture without showing it to the user.
+ * show() + minimize() keeps the window in the OS window list so Chromium routes
+ * audio normally, but the user never sees it.
+ */
+export function showChatGptForRecording() {
+  if (!chatgptWin || chatgptWin.isDestroyed()) return
+  chatgptWin.showInactive()
+  chatgptWin.minimize()
+}
+
+/** Hide the ChatGPT window completely. */
 export function hideChatGptWindow() {
-  chatgptWin?.setPosition(-10000, 0)
+  if (!chatgptWin || chatgptWin.isDestroyed()) return
+  chatgptWin.hide()
 }
