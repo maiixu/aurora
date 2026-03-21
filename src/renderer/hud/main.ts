@@ -16,17 +16,22 @@ const animator = new Animator(canvas)
 const recorder = new Recorder()
 window.aurora.ready()
 
-startVolumeMeter((rms) => animator.setVolume(rms))
+let stopVolumeMeter: (() => void) | null = null
 
 window.aurora.onStateChange((state: AppState) => {
   animator.setState(state)
 
   if (state === AppState.LISTENING) {
     recorder.start().catch(console.error)
+    startVolumeMeter((rms) => animator.setVolume(rms)).then(stop => {
+      stopVolumeMeter = stop
+    })
   } else if (state === AppState.PROCESSING) {
+    stopVolumeMeter?.(); stopVolumeMeter = null
     const wav = recorder.stop()
     window.aurora.sendAudio(wav)
   } else if (state === AppState.CANCELLED) {
+    stopVolumeMeter?.(); stopVolumeMeter = null
     recorder.cancel()
   }
 })
