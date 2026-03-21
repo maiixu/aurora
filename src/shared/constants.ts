@@ -8,8 +8,8 @@ export const ANIM_READY_DISPLAY    = 1200
 export const ANIM_CANCELLED_DISPLAY = 800
 
 // Hotkey (uiohook-napi key code)
-// Option key = 56 (left Alt on macOS)
-export const DEFAULT_HOTKEY_CODE = 56
+// F5 = 63 (fn+F5 on MacBook, plain F5 on external keyboard)
+export const DEFAULT_HOTKEY_CODE = 63
 export const LONG_PRESS_THRESHOLD_MS = 150
 
 // ChatGPT voice input selectors (tried in order)

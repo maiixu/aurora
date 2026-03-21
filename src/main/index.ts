@@ -1,4 +1,4 @@
-import { app } from 'electron'
+import { app, session } from 'electron'
 import { createTray } from './tray'
 import { createHudWindow } from './hud-window'
 import { registerIpcHandlers, wireStateMachineToIpc } from './ipc-handlers'
@@ -23,6 +23,12 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 app.whenReady().then(() => {
+  // Allow media (mic) requests from the default session (HUD renderer) so that
+  // macOS TCC shows a permission dialog the first time getUserMedia is called.
+  session.defaultSession.setPermissionRequestHandler((_wc, permission, callback) => {
+    callback(permission === 'media')
+  })
+
   createHudWindow()
   createChatGptWindow()
   probeSelectors()
