@@ -1,50 +1,29 @@
-// LISTENING state: mic icon with green breathing pulse tied to volume level
+// LISTENING: 5 waveform bars bouncing with audio level
+
+const W = 200, H = 52
+const BAR_COUNT = 5
+const BAR_W = 3.5
+const BAR_GAP = 5.5
+const TOTAL_W = BAR_COUNT * BAR_W + (BAR_COUNT - 1) * BAR_GAP
+const START_X = (W - TOTAL_W) / 2
 
 export function drawBreathing(ctx: CanvasRenderingContext2D, t: number, volume: number) {
-  const cx = 140, cy = 36
+  const minH = 6
+  const maxH = 30
 
-  // Outer glow pulse: driven by volume (0–1), with a baseline idle pulse
-  const idlePulse = 0.5 + 0.5 * Math.sin(t * 0.003)
-  const pulse = Math.max(idlePulse, volume)
-  const glowRadius = 22 + pulse * 14
+  for (let i = 0; i < BAR_COUNT; i++) {
+    const phase = t * 0.0045 + i * 0.75
+    const idle = 0.25 + 0.2 * Math.sin(phase)
+    const driven = volume * (0.7 + 0.3 * Math.sin(phase * 1.3))
+    const level = Math.min(1, Math.max(idle, driven))
+    const barH = minH + level * (maxH - minH)
 
-  const grd = ctx.createRadialGradient(cx, cy, 4, cx, cy, glowRadius)
-  grd.addColorStop(0, `rgba(52, 211, 153, ${0.35 + pulse * 0.35})`)
-  grd.addColorStop(1, 'rgba(52, 211, 153, 0)')
-  ctx.fillStyle = grd
-  ctx.beginPath()
-  ctx.arc(cx, cy, glowRadius, 0, Math.PI * 2)
-  ctx.fill()
+    const x = START_X + i * (BAR_W + BAR_GAP)
+    const y = (H - barH) / 2
 
-  // Mic body
-  const w = 10, h = 16, r = 5
-  const mx = cx - w / 2, my = cy - h / 2 - 2
-
-  ctx.fillStyle = '#ffffff'
-  ctx.beginPath()
-  ctx.moveTo(mx + r, my)
-  ctx.arcTo(mx + w, my, mx + w, my + h, r)
-  ctx.arcTo(mx + w, my + h, mx, my + h, r)
-  ctx.arcTo(mx, my + h, mx, my, r)
-  ctx.arcTo(mx, my, mx + w, my, r)
-  ctx.closePath()
-  ctx.fill()
-
-  // Mic arc
-  ctx.strokeStyle = '#ffffff'
-  ctx.lineWidth = 2
-  ctx.beginPath()
-  ctx.arc(cx, cy + 6, 10, Math.PI, 0, true)
-  ctx.stroke()
-
-  // Stand
-  ctx.beginPath()
-  ctx.moveTo(cx, cy + 16)
-  ctx.lineTo(cx, cy + 22)
-  ctx.stroke()
-
-  ctx.beginPath()
-  ctx.moveTo(cx - 6, cy + 22)
-  ctx.lineTo(cx + 6, cy + 22)
-  ctx.stroke()
+    ctx.fillStyle = `rgba(255, 255, 255, ${0.45 + level * 0.55})`
+    ctx.beginPath()
+    ctx.roundRect(x, y, BAR_W, barH, 1.5)
+    ctx.fill()
+  }
 }

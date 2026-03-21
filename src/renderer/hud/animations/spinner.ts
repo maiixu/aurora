@@ -1,26 +1,23 @@
-// PROCESSING state: minimal progress ring + ripple
+// PROCESSING: three dots pulsing in sequence
+
+const W = 200, H = 52
+const DOT_R = 3.5
+const DOT_GAP = 11
+const DOT_COUNT = 3
+const DOTS_W = DOT_COUNT * DOT_R * 2 + (DOT_COUNT - 1) * (DOT_GAP - DOT_R * 2)
 
 export function drawSpinner(ctx: CanvasRenderingContext2D, t: number) {
-  const cx = 140, cy = 36
-  const angle = (t * 0.004) % (Math.PI * 2)
+  const startX = W / 2 - (DOT_COUNT - 1) * DOT_GAP / 2
 
-  // Ripple rings that expand outward
-  for (let i = 0; i < 2; i++) {
-    const phase = ((t * 0.002) + i * Math.PI) % (Math.PI * 2)
-    const r = 12 + (phase / (Math.PI * 2)) * 12
-    const alpha = 1 - phase / (Math.PI * 2)
-    ctx.strokeStyle = `rgba(180, 180, 180, ${alpha * 0.5})`
-    ctx.lineWidth = 1.5
+  for (let i = 0; i < DOT_COUNT; i++) {
+    const phase = (t * 0.004 - i * 0.6) % (Math.PI * 2)
+    const scale = 0.55 + 0.45 * Math.sin(phase)
+    const alpha = 0.35 + 0.65 * scale
+    const r = DOT_R * (0.7 + 0.3 * scale)
+
+    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`
     ctx.beginPath()
-    ctx.arc(cx, cy, r, 0, Math.PI * 2)
-    ctx.stroke()
+    ctx.arc(startX + i * DOT_GAP, H / 2, r, 0, Math.PI * 2)
+    ctx.fill()
   }
-
-  // Arc progress ring
-  ctx.strokeStyle = 'rgba(220, 220, 220, 0.9)'
-  ctx.lineWidth = 2.5
-  ctx.lineCap = 'round'
-  ctx.beginPath()
-  ctx.arc(cx, cy, 14, angle, angle + Math.PI * 1.4)
-  ctx.stroke()
 }

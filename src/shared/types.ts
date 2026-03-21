@@ -7,20 +7,10 @@ export enum AppState {
 }
 
 export const IPC = {
-  // main → hud
   HUD_SET_STATE:  'hud:setState',
   HUD_SET_VOLUME: 'hud:setVolume',
-  // hud → main
   HUD_READY:      'hud:ready',
-  // hud → main: speech result
-  SPEECH_TEXT:    'speech:text',
-  SPEECH_ERROR:   'speech:error',
-  // chatgpt → main (via preload, kept for future use)
-  CHATGPT_TEXT:   'chatgpt:transcription',
-  CHATGPT_ERROR:  'chatgpt:error',
+  SPEECH_AUDIO:   'speech:audio',
 } as const
 
 export interface HudStatePayload  { state: AppState }
-export interface HudVolumePayload { level: number }
-export interface ChatGptTextPayload  { text: string }
-export interface ChatGptErrorPayload { message: string }

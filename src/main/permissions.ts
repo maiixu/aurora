@@ -4,19 +4,19 @@ export async function ensureMicrophoneAccess(): Promise<boolean> {
   const status = systemPreferences.getMediaAccessStatus('microphone')
   console.log('[mic] status:', status)
 
-  if (status === 'granted') return true
-
-  if (status === 'not-determined') {
-    const granted = await systemPreferences.askForMediaAccess('microphone')
-    console.log('[mic] askForMediaAccess result:', granted)
-    if (!granted) notifyMicDenied()
-    return granted
+  if (status === 'denied' || status === 'restricted') {
+    console.warn('[mic] access denied/restricted — opening System Settings')
+    notifyMicDenied()
+    return false
   }
 
-  // 'denied' or 'restricted' — open System Settings
-  console.warn('[mic] access denied/restricted — opening System Settings')
-  notifyMicDenied()
-  return false
+  // Call askForMediaAccess regardless of 'granted'/'not-determined' —
+  // this forces the native TCC dialog if the system thinks it's needed,
+  // and is a no-op (returns true immediately) if access is already valid.
+  const granted = await systemPreferences.askForMediaAccess('microphone')
+  console.log('[mic] askForMediaAccess result:', granted)
+  if (!granted) notifyMicDenied()
+  return granted
 }
 
 function notifyMicDenied() {

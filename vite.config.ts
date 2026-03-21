@@ -16,7 +16,10 @@ export default defineConfig({
           build: {
             outDir: resolve(__dirname, 'dist/main'),
             rollupOptions: {
-              external: ['electron', 'uiohook-napi', 'electron-store'],
+              external: [
+                'electron',
+                'uiohook-napi',
+              ],
             },
           },
         },
@@ -24,21 +27,6 @@ export default defineConfig({
       {
         // HUD preload
         entry: resolve(__dirname, 'src/preload/hud-preload.ts'),
-        onstart(options) {
-          options.reload()
-        },
-        vite: {
-          build: {
-            outDir: resolve(__dirname, 'dist/preload'),
-            rollupOptions: {
-              external: ['electron'],
-            },
-          },
-        },
-      },
-      {
-        // ChatGPT preload
-        entry: resolve(__dirname, 'src/preload/chatgpt-preload.ts'),
         onstart(options) {
           options.reload()
         },

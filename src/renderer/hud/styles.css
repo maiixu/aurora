@@ -5,12 +5,11 @@
 }
 
 html, body {
-  width: 280px;
-  height: 72px;
+  width: 200px;
+  height: 52px;
   overflow: hidden;
   background: transparent;
-  /* Pill shape — vibrancy fill comes from BrowserWindow setting */
-  border-radius: 36px;
+  border-radius: 26px;
 }
 
 #hud-canvas {

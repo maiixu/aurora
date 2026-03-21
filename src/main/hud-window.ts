@@ -1,25 +1,29 @@
 import { BrowserWindow, screen } from 'electron'
 import { join } from 'path'
-import { HUD_WIDTH, HUD_HEIGHT, HUD_BOTTOM_OFFSET } from '../shared/constants'
+import { HUD_CORNER_MARGIN } from '../shared/constants'
 
 let hudWin: BrowserWindow | null = null
 
+/** Dot size scales with screen height: ~1/50 of screen height, clamped 18–40px */
+function dotSize(sh: number): number {
+  return Math.round(Math.min(Math.max(sh / 50, 18), 40))
+}
+
 export function createHudWindow(): BrowserWindow {
   const { width: sw, height: sh } = screen.getPrimaryDisplay().workAreaSize
+  const sz = dotSize(sh)
 
   hudWin = new BrowserWindow({
-    width: HUD_WIDTH,
-    height: HUD_HEIGHT,
-    x: Math.round(sw / 2 - HUD_WIDTH / 2),
-    y: sh - HUD_BOTTOM_OFFSET,
+    width: sz,
+    height: sz,
+    x: Math.round(sw / 2 - sz / 2),
+    y: sh - sz - HUD_CORNER_MARGIN,
     frame: false,
     transparent: true,
-    vibrancy: 'hud',
-    visualEffectState: 'active',
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
-    hasShadow: true,
+    hasShadow: false,
     // 'panel' type appears above full-screen spaces on macOS
     type: 'panel',
     webPreferences: {
