@@ -10,7 +10,7 @@ import { AppState } from '../shared/types'
 
 if (process.env.NODE_ENV === 'development') {
   app.commandLine.appendSwitch('remote-debugging-port', '9222')
-  app.commandLine.appendSwitch('remote-allow-origins', '*')
+  app.commandLine.appendSwitch('remote-allow-origins', 'http://localhost:5173')
 }
 
 app.dock?.hide()
