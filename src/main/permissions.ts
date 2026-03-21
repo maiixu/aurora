@@ -2,18 +2,19 @@ import { systemPreferences, shell, Notification } from 'electron'
 
 export async function ensureMicrophoneAccess(): Promise<boolean> {
   const status = systemPreferences.getMediaAccessStatus('microphone')
+  console.log('[mic] status:', status)
 
   if (status === 'granted') return true
 
   if (status === 'not-determined') {
     const granted = await systemPreferences.askForMediaAccess('microphone')
-    if (!granted) {
-      notifyMicDenied()
-    }
+    console.log('[mic] askForMediaAccess result:', granted)
+    if (!granted) notifyMicDenied()
     return granted
   }
 
-  // 'denied' or 'restricted'
+  // 'denied' or 'restricted' — open System Settings
+  console.warn('[mic] access denied/restricted — opening System Settings')
   notifyMicDenied()
   return false
 }
