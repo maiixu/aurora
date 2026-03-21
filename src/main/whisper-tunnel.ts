@@ -9,11 +9,16 @@ let tunnelProcess: ChildProcess | null = null
 export function startWhisperTunnel(): void {
   if (tunnelProcess) return
 
+  const { homedir } = require('os')
+  const defaultKey = `${homedir()}/.ssh/aurora_ec2`
+
   tunnelProcess = spawn('ssh', [
     '-N',
     '-o', 'ServerAliveInterval=30',
     '-o', 'ServerAliveCountMax=3',
     '-o', 'ExitOnForwardFailure=yes',
+    '-o', 'StrictHostKeyChecking=no',
+    '-i', defaultKey,
     '-L', `${EC2_WHISPER_PORT}:localhost:${REMOTE_PORT}`,
     SSH_HOST,
   ], {
