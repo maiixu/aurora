@@ -3,7 +3,7 @@ import { join } from 'path'
 
 let tray: Tray | null = null
 
-export function createTray(onDebugState?: (state: string) => void, onLogin?: () => void, onInspect?: () => void, onDump?: () => void): Tray {
+export function createTray(onDebugState?: (state: string) => void, onLogin?: () => void, onInspect?: () => void): Tray {
   // Use a simple template image; replace with proper icns in production
   const iconPath = join(__dirname, '../../assets/tray-icon.png')
   let icon = nativeImage.createFromPath(iconPath)
@@ -22,7 +22,6 @@ export function createTray(onDebugState?: (state: string) => void, onLogin?: () 
     { type: 'separator' },
     { label: 'Open ChatGPT (Login)', click: () => onLogin?.() },
     { label: 'Inspect ChatGPT Window (DevTools)', click: () => onInspect?.() },
-    { label: 'Dump ChatGPT Buttons → console', click: () => onDump?.() },
     { type: 'separator' },
     // Debug submenu for testing states
     {
