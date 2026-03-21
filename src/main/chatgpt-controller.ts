@@ -7,6 +7,7 @@ import {
 } from '../shared/constants'
 import { getChatGptWindow } from './chatgpt-window'
 import { fsm } from './state-machine'
+import { clipboard } from 'electron'
 
 function clickScript(selectors: string[]): string {
   const tries = selectors.map(s => `document.querySelector(${JSON.stringify(s)})`).join(' || ')
@@ -54,9 +55,7 @@ export async function startVoiceInput(): Promise<boolean> {
 }
 
 export async function stopVoiceInput(): Promise<void> {
-  // Try stop button (best-effort); also toggle Dictate button
-  exec(clickScript(CHATGPT_VOICE_STOP_SELECTORS)).catch(() => {})
-  exec(clickScript(CHATGPT_VOICE_START_SELECTORS)).catch(() => {})
+  await exec(clickScript(CHATGPT_VOICE_STOP_SELECTORS)).catch(() => {})
   pollForTranscription()
 }
 
@@ -73,6 +72,7 @@ function pollForTranscription() {
     const text = await exec(script)
     if (text && typeof text === 'string' && text.length > 0) {
       console.log('[chatgpt] transcript:', text)
+      clipboard.writeText(text)
       await exec(clearTextScript(CHATGPT_TEXTAREA_SELECTORS))
       fsm.textReceived(text)
     } else {

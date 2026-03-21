@@ -15,9 +15,7 @@ export function createChatGptWindow(): BrowserWindow {
   chatgptWin = new BrowserWindow({
     width: 1024,
     height: 768,
-    x: -10000,   // off-screen so document.hidden stays false (needed for media APIs)
-    y: 0,
-    show: true,
+    show: false,
     webPreferences: {
       session: gptSession,
       preload: join(__dirname, '../preload/chatgpt-preload.js'),

@@ -22,6 +22,8 @@ export const CHATGPT_VOICE_START_SELECTORS = [
 ]
 
 export const CHATGPT_VOICE_STOP_SELECTORS = [
+  'button[aria-label="Stop dictation"]',   // confirmed from live DOM 2026-03-21
+  'button[aria-label="Submit dictation"]',  // alternative: submit immediately
   'button[aria-label="Stop dictating"]',
   'button[aria-label="Done dictating"]',
   'button[aria-label="Stop Voice"]',
@@ -30,8 +32,9 @@ export const CHATGPT_VOICE_STOP_SELECTORS = [
 ]
 
 export const CHATGPT_TEXTAREA_SELECTORS = [
-  '#prompt-textarea',
+  '#prompt-textarea',                          // ProseMirror contenteditable (confirmed)
   'div[contenteditable="true"][data-placeholder]',
+  'textarea[name="prompt-textarea"]',          // fallback textarea
   'textarea[data-id="root"]',
 ]
 
