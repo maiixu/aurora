@@ -13,16 +13,20 @@ export const DEFAULT_HOTKEY_CODE = 56
 export const LONG_PRESS_THRESHOLD_MS = 150
 
 // ChatGPT voice input selectors (tried in order)
+// "Dictate button" confirmed from live DOM dump 2026-03-21
 export const CHATGPT_VOICE_START_SELECTORS = [
+  'button[aria-label="Dictate button"]',
+  'button[aria-label="Start Voice"]',
   'button[aria-label="Start voice input"]',
   'button[data-testid="composer-speech-button"]',
-  'button[aria-label="Voice input"]',
 ]
 
 export const CHATGPT_VOICE_STOP_SELECTORS = [
+  'button[aria-label="Stop dictating"]',
+  'button[aria-label="Done dictating"]',
+  'button[aria-label="Stop Voice"]',
   'button[aria-label="Stop voice input"]',
   'button[data-testid="composer-speech-stop"]',
-  'button[aria-label="Stop recording"]',
 ]
 
 export const CHATGPT_TEXTAREA_SELECTORS = [

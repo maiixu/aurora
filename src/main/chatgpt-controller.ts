@@ -58,7 +58,21 @@ async function exec(script: string): Promise<unknown> {
 /** Click the "start voice input" button. */
 export async function startVoiceInput(): Promise<boolean> {
   const ok = await exec(clickScript(CHATGPT_VOICE_START_SELECTORS))
-  if (!ok) console.warn('[chatgpt] start voice: no matching selector found')
+  if (!ok) {
+    console.warn('[chatgpt] start voice: no matching selector found')
+  } else {
+    // After click, dump buttons after 1s to discover the stop-button aria-label
+    setTimeout(async () => {
+      const snapshot = await exec(`
+        (() => Array.from(document.querySelectorAll('button'))
+          .filter(b => b.getAttribute('aria-label'))
+          .map(b => ({ label: b.getAttribute('aria-label'), cls: b.className?.toString().slice(0,60) }))
+          .slice(0, 20)
+        )()
+      `)
+      console.log('[chatgpt] buttons after start-voice click:', JSON.stringify(snapshot))
+    }, 1000)
+  }
   return !!ok
 }
 
@@ -97,14 +111,16 @@ export async function probeSelectors(): Promise<void> {
   const win = getChatGptWindow()
   if (!win) return
 
-  win.webContents.on('did-finish-load', () => {
-    // Poll every 5s for up to 2 minutes — waits for user to be logged in
+  win.webContents.once('did-finish-load', () => {
+    // Poll every 5s for up to 60s to catch login completing
     let attempts = 0
     const poll = async () => {
+      if (win.isDestroyed()) return
       await new Promise(r => setTimeout(r, 5000))
+      if (win.isDestroyed()) return
       await dumpButtons()
       attempts++
-      if (attempts < 24) setTimeout(poll, 5000)
+      if (attempts < 12) setTimeout(poll, 5000)
     }
     poll()
   })
