@@ -1,0 +1,18 @@
+appId: com.aurora.app
+productName: Aurora
+directories:
+  output: release
+  buildResources: assets
+
+mac:
+  target: dmg
+  icon: assets/icon.icns
+  category: public.app-category.productivity
+  extendInfo:
+    NSMicrophoneUsageDescription: "Aurora uses the microphone to transcribe your voice."
+    LSUIElement: true  # Hide from Dock by default (menu bar only)
+
+files:
+  - dist/**
+  - assets/**
+  - package.json
