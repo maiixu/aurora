@@ -1,8 +1,8 @@
-import { ipcMain } from 'electron'
+import { ipcMain, clipboard } from 'electron'
 import { IPC, AppState } from '../shared/types'
 import { fsm } from './state-machine'
 import { getHudWindow, showHud, hideHud } from './hud-window'
-import { clipboard } from 'electron'
+import { startVoiceInput, stopVoiceInput } from './chatgpt-controller'
 
 export function registerIpcHandlers() {
   // HUD renderer signals it has loaded
@@ -38,5 +38,11 @@ export function broadcastState(state: AppState) {
 export function wireStateMachineToIpc() {
   fsm.on('stateChange', ({ to }: { from: AppState; to: AppState }) => {
     broadcastState(to)
+
+    if (to === AppState.LISTENING) {
+      startVoiceInput().catch(console.error)
+    } else if (to === AppState.PROCESSING) {
+      stopVoiceInput().catch(console.error)
+    }
   })
 }
