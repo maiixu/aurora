@@ -133,6 +133,10 @@ export const myAppPaster: Paster = {
 | Input Monitoring | Global hotkey via uiohook-napi |
 | Accessibility | Paste via UI scripting (Aurora itself — no helper binary needed) |
 
+## Development learnings
+
+Accumulated troubleshooting notes, paste strategy decisions, and AppleScript gotchas are in **[PROGRESS.md](PROGRESS.md)**. Read it before debugging paste issues or adding a new app paster. Update it whenever a non-obvious problem is solved.
+
 ## Key design decisions (don't re-litigate without good reason)
 
 - **Toggle hotkey** (press once = start, press again = stop) — simpler than hold, no Karabiner hold-threshold needed
