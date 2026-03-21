@@ -10,7 +10,7 @@ export default defineConfig({
         // Main process — absolute path avoids root: 'src/renderer' confusion
         entry: resolve(__dirname, 'src/main/index.ts'),
         onstart(options) {
-          options.startup()  // launch Electron after main process builds
+          options.startup()
         },
         vite: {
           build: {

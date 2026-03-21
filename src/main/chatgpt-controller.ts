@@ -64,12 +64,12 @@ export async function startVoiceInput(): Promise<boolean> {
     console.warn('[chatgpt] start voice: no matching selector found')
   } else {
     // After click, dump buttons after 1s to discover the stop-button aria-label
+    // Dump buttons 1s after click to see what state the Dictate button becomes
     setTimeout(async () => {
       const snapshot = await exec(`
         (() => Array.from(document.querySelectorAll('button'))
           .filter(b => b.getAttribute('aria-label'))
           .map(b => ({ label: b.getAttribute('aria-label'), cls: b.className?.toString().slice(0,60) }))
-          .slice(0, 20)
         )()
       `)
       console.log('[chatgpt] buttons after start-voice click:', JSON.stringify(snapshot))
@@ -104,6 +104,23 @@ function pollForTranscription() {
 
     const text = await exec(script)
     pollCount++
+    if (pollCount === 1) {
+      // First poll: also dump the textarea element structure to verify selector
+      const debug = await exec(`
+        (() => {
+          const el = ${CHATGPT_TEXTAREA_SELECTORS.map(s => `document.querySelector(${JSON.stringify(s)})`).join(' || ')}
+          if (!el) return { found: false }
+          return {
+            found: true, tag: el.tagName, id: el.id,
+            contenteditable: el.getAttribute('contenteditable'),
+            value: el.value ?? null,
+            textContent: el.textContent?.slice(0, 100),
+            innerHTML: el.innerHTML?.slice(0, 200),
+          }
+        })()
+      `)
+      console.log('[chatgpt] textarea debug:', JSON.stringify(debug))
+    }
     if (pollCount <= 3 || pollCount % 5 === 0) {
       console.log(`[chatgpt] poll #${pollCount} textarea value:`, JSON.stringify(text))
     }

@@ -53,6 +53,33 @@ app.whenReady().then(() => {
 
   startHotkey()
   console.log('[aurora] ready — menu bar icon active')
+
+  // Auto-test: trigger LISTENING → PROCESSING to verify ChatGPT voice flow
+  if (process.env.TEST_VOICE === '1') {
+    const { getChatGptWindow } = require('./chatgpt-window') as typeof import('./chatgpt-window')
+    console.log('[test] will run textarea injection test in 8s...')
+    setTimeout(async () => {
+      const win = getChatGptWindow()
+      if (!win || win.isDestroyed()) return
+
+      // Inject fake transcript directly into #prompt-textarea to test polling
+      const injected = await win.webContents.executeJavaScript(`
+        (() => {
+          const el = document.querySelector('#prompt-textarea') ||
+                     document.querySelector('[contenteditable="true"]')
+          if (!el) return 'element not found'
+          el.textContent = 'hello this is a test transcript'
+          el.dispatchEvent(new Event('input', { bubbles: true }))
+          return 'injected: ' + (el.textContent || el.value)
+        })()
+      `)
+      console.log('[test] textarea injection result:', injected)
+
+      // Now trigger PROCESSING to start polling
+      fsm.startListening()
+      setTimeout(() => fsm.stopListening(), 500)
+    }, 8000)
+  }
 })
 
 app.on('will-quit', () => {
