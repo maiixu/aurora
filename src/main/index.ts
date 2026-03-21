@@ -4,7 +4,7 @@ import { createHudWindow } from './hud-window'
 import { registerIpcHandlers, wireStateMachineToIpc } from './ipc-handlers'
 import { fsm } from './state-machine'
 import { startHotkey, stopHotkey } from './hotkey'
-import { ensureMicrophoneAccess } from './permissions'
+import { ensureMicrophoneAccess, ensureAccessibilityAccess } from './permissions'
 import { startWhisperTunnel, stopWhisperTunnel } from './whisper-tunnel'
 import { AppState } from '../shared/types'
 
@@ -41,6 +41,7 @@ app.whenReady().then(() => {
   ensureMicrophoneAccess().then(granted => {
     if (!granted) console.warn('[aurora] microphone access not granted')
   })
+  ensureAccessibilityAccess()
 
   startWhisperTunnel()
   startHotkey()

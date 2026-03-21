@@ -1,7 +1,7 @@
 import { spawn, ChildProcess } from 'child_process'
 
 export const EC2_WHISPER_PORT = 18080  // local tunnel port
-const SSH_HOST = 'mac-ec2'
+const SSH_HOST = process.env.AURORA_SSH_HOST ?? 'mac-ec2'
 
 let tunnelProcess: ChildProcess | null = null
 

@@ -1,5 +1,19 @@
 import { systemPreferences, shell, Notification } from 'electron'
 
+export function ensureAccessibilityAccess(): boolean {
+  const trusted = systemPreferences.isTrustedAccessibilityClient(false)
+  console.log('[accessibility] trusted:', trusted)
+  if (!trusted) {
+    // Prompt: opens System Settings → Accessibility and asks the user to add Aurora
+    systemPreferences.isTrustedAccessibilityClient(true)
+    new Notification({
+      title: 'Aurora needs Accessibility access',
+      body: 'Open System Settings → Privacy & Security → Accessibility and enable Aurora, then restart.',
+    }).show()
+  }
+  return trusted
+}
+
 export async function ensureMicrophoneAccess(): Promise<boolean> {
   const status = systemPreferences.getMediaAccessStatus('microphone')
   console.log('[mic] status:', status)

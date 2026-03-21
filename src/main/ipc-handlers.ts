@@ -1,5 +1,6 @@
 import { ipcMain, clipboard } from 'electron'
 import { execSync } from 'child_process'
+import { join } from 'path'
 import { getCapturedFrontApp } from './hotkey'
 import { IPC, AppState } from '../shared/types'
 import { fsm } from './state-machine'
@@ -33,10 +34,10 @@ export function registerIpcHandlers() {
               // iTerm2 intercepts simulated Cmd+V — write directly to the session
               execSync(`osascript -e 'tell app "iTerm2" to tell current session of current window to write text (do shell script "pbpaste") newline NO'`)
             } else {
-              // HUD is a non-activating panel window, so focus never left the target app.
-              // Re-activating can cause text field to lose focus in sandboxed apps (Messages, etc).
-              // Just send Cmd+V to the current frontmost app directly.
-              execSync(`osascript -e 'tell application "System Events" to keystroke "v" using {command down}'`)
+              // Use CGEventPost (paste-helper) to inject Cmd+V at the HID stream level.
+              // This bypasses the Accessibility API and works for sandboxed apps like Messages.
+              const helperPath = join(__dirname, '../../paste-helper')
+              execSync(helperPath)
             }
             console.log('[paste] done')
           } catch (e) {
