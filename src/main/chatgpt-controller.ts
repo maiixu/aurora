@@ -57,6 +57,8 @@ async function exec(script: string): Promise<unknown> {
 
 /** Click the "start voice input" button. */
 export async function startVoiceInput(): Promise<boolean> {
+  // Clear any leftover text so poll doesn't pick up stale content
+  await exec(clearTextScript(CHATGPT_TEXTAREA_SELECTORS))
   const ok = await exec(clickScript(CHATGPT_VOICE_START_SELECTORS))
   if (!ok) {
     console.warn('[chatgpt] start voice: no matching selector found')
@@ -76,9 +78,15 @@ export async function startVoiceInput(): Promise<boolean> {
   return !!ok
 }
 
-/** Click the "stop voice input" button and begin polling for text. */
+/** Stop voice input and begin polling for transcribed text.
+ *  ChatGPT Dictate auto-stops on silence, so the stop-button click is best-effort.
+ *  We start polling immediately regardless. */
 export async function stopVoiceInput(): Promise<void> {
-  await exec(clickScript(CHATGPT_VOICE_STOP_SELECTORS))
+  // Try stop button (works if ChatGPT is still in active-recording state)
+  exec(clickScript(CHATGPT_VOICE_STOP_SELECTORS)).catch(() => {})
+  // Also try clicking the Dictate button again as a toggle
+  exec(clickScript(CHATGPT_VOICE_START_SELECTORS)).catch(() => {})
+  // Poll immediately — don't wait for stop to succeed
   pollForTranscription()
 }
 
