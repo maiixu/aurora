@@ -47,8 +47,8 @@ async function exec(script: string): Promise<unknown> {
 }
 
 export async function startVoiceInput(): Promise<boolean> {
-  await exec(clearTextScript(CHATGPT_TEXTAREA_SELECTORS))
   const ok = await exec(clickScript(CHATGPT_VOICE_START_SELECTORS))
+  console.log('[chatgpt] start voice click result:', ok)
   if (!ok) console.warn('[chatgpt] start voice: no matching selector found')
   return !!ok
 }
