@@ -9,19 +9,7 @@ export function registerIpcHandlers() {
     console.log('[ipc] HUD ready')
   })
 
-  // Speech result from HUD renderer (SpeechRecognition API)
-  ipcMain.on(IPC.SPEECH_TEXT, (_event, { text }: { text: string }) => {
-    console.log('[speech] transcript:', text)
-    clipboard.writeText(text)
-    fsm.textReceived(text)
-  })
-
-  ipcMain.on(IPC.SPEECH_ERROR, (_event, { message }: { message: string }) => {
-    console.error('[speech] error:', message)
-    fsm.cancel()
-  })
-
-  // ChatGPT preload (kept for future use)
+  // ChatGPT preload
   ipcMain.on(IPC.CHATGPT_TEXT, (_event, { text }: { text: string }) => {
     clipboard.writeText(text)
     fsm.textReceived(text)

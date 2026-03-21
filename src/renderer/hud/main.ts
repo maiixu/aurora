@@ -1,7 +1,6 @@
 import { AppState } from '../../shared/types'
 import { Animator } from './animator'
 import { startVolumeMeter } from './volume-meter'
-import { createSpeechRecognizer } from './speech'
 
 const canvas = document.getElementById('hud-canvas') as HTMLCanvasElement
 canvas.width  = 280
@@ -13,22 +12,9 @@ window.aurora.ready()
 // Volume meter — local only, drives the breathing animation
 startVolumeMeter((rms) => animator.setVolume(rms))
 
-// Speech recognizer — result goes to main process → clipboard → FSM
-const rec = createSpeechRecognizer(
-  (text) => window.aurora.sendText(text),
-  (msg)  => window.aurora.sendError(msg),
-)
-
+// State changes drive animation only; voice I/O is handled by ChatGPT window
 window.aurora.onStateChange((state: AppState) => {
   animator.setState(state)
-
-  if (state === AppState.LISTENING) {
-    rec?.start()
-  } else if (state === AppState.PROCESSING) {
-    rec?.stop()
-  } else if (state === AppState.CANCELLED) {
-    rec?.abort()
-  }
 })
 
 declare global {
