@@ -1,6 +1,6 @@
-# Aurora
+# ✨ Aurora
 
-Ghost voice-injection for macOS. Hold Dictation key → mic records → EC2 whisper.cpp transcribes → text pastes into the focused app.
+Ghost voice-injection for macOS. Press Dictation key → mic records → press again → EC2 whisper.cpp transcribes → text pastes into the focused app.
 
 ## How it works
 
