@@ -1,5 +1,6 @@
-import { app, BrowserWindow } from 'electron'
+import { app } from 'electron'
 import { createTray } from './tray'
+import { createHudWindow, showHud, hideHud } from './hud-window'
 
 // Hide from Dock — menu bar only app
 app.dock?.hide()
@@ -11,9 +12,17 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 app.whenReady().then(() => {
+  // Pre-create HUD at startup (avoids latency on hotkey press)
+  createHudWindow()
+
   createTray((debugState) => {
     console.log('[debug] state triggered:', debugState)
-    // Will be wired to state machine in feat/state-machine
+    if (debugState === 'IDLE') {
+      hideHud()
+    } else {
+      showHud()
+    }
+    // Will be fully wired to state machine in feat/state-machine
   })
 
   console.log('[aurora] ready — menu bar icon active')
