@@ -15,7 +15,9 @@ export function createChatGptWindow(): BrowserWindow {
   chatgptWin = new BrowserWindow({
     width: 1024,
     height: 768,
-    show: false,  // always hidden; shown temporarily for login via tray
+    x: -10000,   // off-screen so document.hidden stays false (needed for media APIs)
+    y: 0,
+    show: true,
     webPreferences: {
       session: gptSession,
       preload: join(__dirname, '../preload/chatgpt-preload.js'),
@@ -25,6 +27,11 @@ export function createChatGptWindow(): BrowserWindow {
   })
 
   chatgptWin.loadURL('https://chatgpt.com')
+
+  // Ensure audio is never muted and timers aren't throttled
+  chatgptWin.webContents.setAudioMuted(false)
+  chatgptWin.webContents.setBackgroundThrottling(false)
+
   return chatgptWin
 }
 
@@ -32,11 +39,13 @@ export function getChatGptWindow(): BrowserWindow | null {
   return chatgptWin
 }
 
-/** Show the ChatGPT window so the user can log in, then hide it again. */
+/** Move the ChatGPT window on-screen so the user can log in. */
 export function showChatGptForLogin() {
-  chatgptWin?.show()
+  chatgptWin?.setPosition(100, 100)
+  chatgptWin?.focus()
 }
 
+/** Return the ChatGPT window to off-screen position. */
 export function hideChatGptWindow() {
-  chatgptWin?.hide()
+  chatgptWin?.setPosition(-10000, 0)
 }
