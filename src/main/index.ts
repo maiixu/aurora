@@ -8,7 +8,7 @@ import { ensureMicrophoneAccess, ensureAccessibilityAccess } from './permissions
 import { startWhisperTunnel, stopWhisperTunnel } from './whisper-tunnel'
 import { AppState } from '../shared/types'
 
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === 'development' && process.env.AURORA_DEVTOOLS) {
   app.commandLine.appendSwitch('remote-debugging-port', '9222')
   app.commandLine.appendSwitch('remote-allow-origins', 'http://localhost:5173')
 }
