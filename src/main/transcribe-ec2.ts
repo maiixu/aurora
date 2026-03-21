@@ -2,6 +2,7 @@ import { EC2_WHISPER_PORT } from './whisper-tunnel'
 import { readFileSync } from 'fs'
 import { homedir } from 'os'
 import { join } from 'path'
+import { postprocess } from './postprocess'
 
 // ~/.aurora/dictionary.txt format:
 //
@@ -98,6 +99,6 @@ export async function transcribeWithEc2Whisper(wavBuffer: Buffer): Promise<strin
 
   const json = await res.json() as { text?: string }
   const raw = (json.text ?? '').trim()
-
-  return replacements.length ? applyReplacements(raw, replacements) : raw
+  const replaced = replacements.length ? applyReplacements(raw, replacements) : raw
+  return postprocess(replaced)
 }
