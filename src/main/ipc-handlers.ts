@@ -4,7 +4,7 @@ import { getPaster } from './pasters'
 import { IPC, AppState } from '../shared/types'
 import { fsm } from './state-machine'
 import { getHudWindow, showHud, hideHud } from './hud-window'
-import { getTrayAnimator } from './tray'
+import { getTrayAnimator, updateTrayMenu } from './tray'
 import { transcribe } from './transcriber'
 
 export function registerIpcHandlers() {
@@ -25,6 +25,7 @@ export function registerIpcHandlers() {
         }
         console.log('[transcriber] transcript:', text)
         clipboard.writeText(text)
+        updateTrayMenu(undefined, text)
         fsm.textReceived(text)
         const target = getCapturedFrontApp()
         console.log('[paste] target app:', target)
@@ -47,6 +48,7 @@ export function registerIpcHandlers() {
 export function broadcastState(state: AppState) {
   const win = getHudWindow()
   getTrayAnimator()?.setState(state)
+  updateTrayMenu(state)
 
   if (!win) return
   if (state === AppState.IDLE) {

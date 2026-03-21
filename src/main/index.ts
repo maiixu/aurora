@@ -33,14 +33,7 @@ app.whenReady().then(() => {
   registerIpcHandlers()
   wireStateMachineToIpc()
 
-  createTray((debugState) => {
-    switch (debugState as AppState) {
-      case AppState.LISTENING:  fsm.startListening(); break
-      case AppState.PROCESSING: fsm.stopListening(); break
-      case AppState.READY:      fsm.textReceived('Aurora debug'); break
-      case AppState.CANCELLED:  fsm.cancel(); break
-    }
-  })
+  createTray()
 
   ensureMicrophoneAccess().then(granted => {
     if (!granted) console.warn('[aurora] microphone access not granted')
