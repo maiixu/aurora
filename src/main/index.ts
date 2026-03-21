@@ -3,6 +3,7 @@ import { createTray } from './tray'
 import { createHudWindow } from './hud-window'
 import { registerIpcHandlers, wireStateMachineToIpc } from './ipc-handlers'
 import { fsm } from './state-machine'
+import { startHotkey, stopHotkey } from './hotkey'
 import { AppState } from '../shared/types'
 
 // Hide from Dock — menu bar only app
@@ -28,7 +29,12 @@ app.whenReady().then(() => {
     }
   })
 
+  startHotkey()
   console.log('[aurora] ready — menu bar icon active')
+})
+
+app.on('will-quit', () => {
+  stopHotkey()
 })
 
 app.on('window-all-closed', () => {
