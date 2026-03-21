@@ -2,7 +2,6 @@ import { ipcMain, clipboard } from 'electron'
 import { IPC, AppState } from '../shared/types'
 import { fsm } from './state-machine'
 import { getHudWindow, showHud, hideHud } from './hud-window'
-import { startVoiceInput, stopVoiceInput } from './chatgpt-controller'
 
 export function registerIpcHandlers() {
   // HUD renderer signals it has loaded
@@ -10,7 +9,19 @@ export function registerIpcHandlers() {
     console.log('[ipc] HUD ready')
   })
 
-  // ChatGPT preload sends transcribed text
+  // Speech result from HUD renderer (SpeechRecognition API)
+  ipcMain.on(IPC.SPEECH_TEXT, (_event, { text }: { text: string }) => {
+    console.log('[speech] transcript:', text)
+    clipboard.writeText(text)
+    fsm.textReceived(text)
+  })
+
+  ipcMain.on(IPC.SPEECH_ERROR, (_event, { message }: { message: string }) => {
+    console.error('[speech] error:', message)
+    fsm.cancel()
+  })
+
+  // ChatGPT preload (kept for future use)
   ipcMain.on(IPC.CHATGPT_TEXT, (_event, { text }: { text: string }) => {
     clipboard.writeText(text)
     fsm.textReceived(text)
@@ -39,10 +50,6 @@ export function wireStateMachineToIpc() {
   fsm.on('stateChange', ({ to }: { from: AppState; to: AppState }) => {
     broadcastState(to)
 
-    if (to === AppState.LISTENING) {
-      startVoiceInput().catch(console.error)
-    } else if (to === AppState.PROCESSING) {
-      stopVoiceInput().catch(console.error)
-    }
+    // SpeechRecognition start/stop is driven by the HUD renderer itself
   })
 }

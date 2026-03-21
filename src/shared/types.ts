@@ -12,7 +12,10 @@ export const IPC = {
   HUD_SET_VOLUME: 'hud:setVolume',
   // hud → main
   HUD_READY:      'hud:ready',
-  // chatgpt → main (via preload)
+  // hud → main: speech result
+  SPEECH_TEXT:    'speech:text',
+  SPEECH_ERROR:   'speech:error',
+  // chatgpt → main (via preload, kept for future use)
   CHATGPT_TEXT:   'chatgpt:transcription',
   CHATGPT_ERROR:  'chatgpt:error',
 } as const

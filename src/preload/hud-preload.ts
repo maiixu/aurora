@@ -8,5 +8,7 @@ contextBridge.exposeInMainWorld('aurora', {
   onVolumeChange: (cb: (level: number) => void) => {
     ipcRenderer.on(IPC.HUD_SET_VOLUME, (_event, payload: { level: number }) => cb(payload.level))
   },
-  ready: () => ipcRenderer.send(IPC.HUD_READY),
+  ready:       () => ipcRenderer.send(IPC.HUD_READY),
+  sendText:    (text: string)    => ipcRenderer.send(IPC.SPEECH_TEXT,  { text }),
+  sendError:   (message: string) => ipcRenderer.send(IPC.SPEECH_ERROR, { message }),
 })

@@ -92,20 +92,36 @@ function pollForTranscription() {
   setTimeout(tick, POLL_INTERVAL_MS)
 }
 
-/** Probe selectors on startup — logs a warning if none are found. */
+/** Poll until logged-in ChatGPT composer is visible, then dump buttons. */
 export async function probeSelectors(): Promise<void> {
   const win = getChatGptWindow()
   if (!win) return
 
-  // Wait for chatgpt.com to load
-  win.webContents.once('did-finish-load', async () => {
-    const startOk = await exec(
-      `!!(${CHATGPT_VOICE_START_SELECTORS.map(s => `document.querySelector(${JSON.stringify(s)})`).join(' || ')})`
-    )
-    if (!startOk) {
-      console.warn('[chatgpt] ⚠ No voice start selector matched — ChatGPT DOM may have changed')
-    } else {
-      console.log('[chatgpt] voice selectors OK')
+  win.webContents.on('did-finish-load', () => {
+    // Poll every 5s for up to 2 minutes — waits for user to be logged in
+    let attempts = 0
+    const poll = async () => {
+      await new Promise(r => setTimeout(r, 5000))
+      await dumpButtons()
+      attempts++
+      if (attempts < 24) setTimeout(poll, 5000)
     }
+    poll()
   })
+}
+
+/** Dump all button aria-labels, data-testids, and SVG hints — run after page load to find voice button. */
+export async function dumpButtons(): Promise<void> {
+  const result = await exec(`
+    (() => {
+      return Array.from(document.querySelectorAll('button')).map(b => ({
+        ariaLabel: b.getAttribute('aria-label'),
+        testId:    b.getAttribute('data-testid'),
+        title:     b.getAttribute('title'),
+        cls:       b.className?.toString().slice(0, 80),
+        text:      b.innerText?.trim().slice(0, 40),
+      })).filter(b => b.ariaLabel || b.testId || b.title)
+    })()
+  `)
+  console.log('[chatgpt] buttons:', JSON.stringify(result, null, 2))
 }

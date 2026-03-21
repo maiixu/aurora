@@ -3,17 +3,26 @@ import { join } from 'path'
 
 let tray: Tray | null = null
 
-export function createTray(onDebugState?: (state: string) => void, onLogin?: () => void): Tray {
+export function createTray(onDebugState?: (state: string) => void, onLogin?: () => void, onInspect?: () => void, onDump?: () => void): Tray {
   // Use a simple template image; replace with proper icns in production
   const iconPath = join(__dirname, '../../assets/tray-icon.png')
-  const icon = nativeImage.createFromPath(iconPath)
-  tray = new Tray(icon.isEmpty() ? nativeImage.createEmpty() : icon)
+  let icon = nativeImage.createFromPath(iconPath)
+  if (icon.isEmpty()) {
+    // Fallback: 16x16 white circle so menu bar item is always clickable
+    icon = nativeImage.createFromDataURL(
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAHklEQVQ4T2NkYGD4z8BAAoxqoJMGRkdH/6MuAAAvBgABFqNAsgAAAABJRU5ErkJggg=='
+    )
+  }
+  icon.setTemplateImage(true)  // macOS: adapts to light/dark menu bar
+  tray = new Tray(icon)
   tray.setToolTip('Aurora')
 
   const menu = Menu.buildFromTemplate([
     { label: 'Aurora', enabled: false },
     { type: 'separator' },
     { label: 'Open ChatGPT (Login)', click: () => onLogin?.() },
+    { label: 'Inspect ChatGPT Window (DevTools)', click: () => onInspect?.() },
+    { label: 'Dump ChatGPT Buttons → console', click: () => onDump?.() },
     { type: 'separator' },
     // Debug submenu for testing states
     {
