@@ -6,6 +6,7 @@ import { fsm } from './state-machine'
 import { startHotkey, stopHotkey } from './hotkey'
 import { createChatGptWindow, showChatGptForLogin } from './chatgpt-window'
 import { probeSelectors } from './chatgpt-controller'
+import { ensureMicrophoneAccess } from './permissions'
 import { AppState } from '../shared/types'
 
 // Hide from Dock — menu bar only app
@@ -32,6 +33,12 @@ app.whenReady().then(() => {
       case AppState.IDLE:       /* auto transitions handle this */ break
     }
   }, showChatGptForLogin)
+
+  // Request mic access on first launch (non-blocking — hotkey still works,
+  // voice meter in HUD will simply show idle pulse until access is granted)
+  ensureMicrophoneAccess().then(granted => {
+    if (!granted) console.warn('[aurora] microphone access not granted')
+  })
 
   startHotkey()
   console.log('[aurora] ready — menu bar icon active')
