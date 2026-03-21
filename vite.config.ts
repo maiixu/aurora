@@ -7,11 +7,11 @@ export default defineConfig({
   plugins: [
     electron([
       {
-        // Main process
-        entry: 'src/main/index.ts',
+        // Main process — absolute path avoids root: 'src/renderer' confusion
+        entry: resolve(__dirname, 'src/main/index.ts'),
         vite: {
           build: {
-            outDir: 'dist/main',
+            outDir: resolve(__dirname, 'dist/main'),
             rollupOptions: {
               external: ['electron', 'uiohook-napi', 'electron-store'],
             },
@@ -20,13 +20,13 @@ export default defineConfig({
       },
       {
         // HUD preload
-        entry: 'src/preload/hud-preload.ts',
+        entry: resolve(__dirname, 'src/preload/hud-preload.ts'),
         onstart(options) {
           options.reload()
         },
         vite: {
           build: {
-            outDir: 'dist/preload',
+            outDir: resolve(__dirname, 'dist/preload'),
             rollupOptions: {
               external: ['electron'],
             },
@@ -35,13 +35,13 @@ export default defineConfig({
       },
       {
         // ChatGPT preload
-        entry: 'src/preload/chatgpt-preload.ts',
+        entry: resolve(__dirname, 'src/preload/chatgpt-preload.ts'),
         onstart(options) {
           options.reload()
         },
         vite: {
           build: {
-            outDir: 'dist/preload',
+            outDir: resolve(__dirname, 'dist/preload'),
             rollupOptions: {
               external: ['electron'],
             },
