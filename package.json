@@ -1,0 +1,25 @@
+{
+  "name": "aurora",
+  "version": "0.1.0",
+  "description": "Voice-to-text injection for macOS",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build && electron-builder",
+    "build:electron": "tsc && vite build",
+    "preview": "electron dist/main/index.js"
+  },
+  "dependencies": {
+    "electron-store": "^10.0.0",
+    "uiohook-napi": "^1.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "electron": "^35.0.0",
+    "electron-builder": "^25.0.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0",
+    "vite-plugin-electron": "^0.29.0",
+    "vite-plugin-electron-renderer": "^0.14.0"
+  }
+}
