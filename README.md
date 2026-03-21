@@ -36,9 +36,14 @@ Host mac-ec2
   IdentityFile ~/.ssh/your-key.pem
 ```
 
-To use a different alias: `export AURORA_SSH_HOST=my-host`
+To use a different alias or port:
 
-The EC2 instance must run `whisper-server` (whisper.cpp) on port 8080.
+```bash
+export AURORA_SSH_HOST=my-host      # default: mac-ec2
+export AURORA_WHISPER_PORT=9000     # default: 8080 (whisper.cpp default)
+```
+
+The EC2 instance must run `whisper-server` (whisper.cpp), default port 8080.
 
 ### 3. Karabiner Elements
 

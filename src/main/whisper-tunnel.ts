@@ -1,7 +1,8 @@
 import { spawn, ChildProcess } from 'child_process'
 
-export const EC2_WHISPER_PORT = 18080  // local tunnel port
-const SSH_HOST = process.env.AURORA_SSH_HOST ?? 'mac-ec2'
+export const EC2_WHISPER_PORT = 18080                                    // local tunnel port
+const REMOTE_PORT = parseInt(process.env.AURORA_WHISPER_PORT ?? '8080') // whisper-server on EC2
+const SSH_HOST    = process.env.AURORA_SSH_HOST ?? 'mac-ec2'
 
 let tunnelProcess: ChildProcess | null = null
 
@@ -13,7 +14,7 @@ export function startWhisperTunnel(): void {
     '-o', 'ServerAliveInterval=30',
     '-o', 'ServerAliveCountMax=3',
     '-o', 'ExitOnForwardFailure=yes',
-    '-L', `${EC2_WHISPER_PORT}:localhost:8080`,
+    '-L', `${EC2_WHISPER_PORT}:localhost:${REMOTE_PORT}`,
     SSH_HOST,
   ], {
     stdio: 'ignore',
