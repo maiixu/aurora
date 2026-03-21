@@ -3,22 +3,59 @@ import { readFileSync } from 'fs'
 import { homedir } from 'os'
 import { join } from 'path'
 
-// Optional vocabulary prompt: ~/.aurora/prompt.txt
-// Whisper uses it as an initial prompt to bias recognition toward these words/spellings.
-// Format: comma-separated terms or natural prose, e.g.:
-//   Claude, Cursor, Obsidian, TypeScript, Karabiner, macOS, EC2
-function loadPrompt(): string {
+// ~/.aurora/dictionary.txt format:
+//
+//   word1, word2, ...    ← whisper initial prompt (biases recognition)
+//
+//   [replace]            ← optional post-processing substitutions
+//   cloud code = Claude Code
+//   cloud = Claude
+//
+// Replacements are applied in order — put longer phrases before shorter ones.
+
+interface Dictionary {
+  prompt: string
+  replacements: Array<{ from: string; to: string }>
+}
+
+function loadDictionary(): Dictionary {
   try {
-    return readFileSync(join(homedir(), '.aurora', 'prompt.txt'), 'utf-8').trim()
+    const raw = readFileSync(join(homedir(), '.aurora', 'dictionary.txt'), 'utf-8')
+    const [promptSection, replaceSection] = raw.split(/^\[replace\]/m)
+
+    const prompt = (promptSection ?? '').trim()
+
+    const replacements = (replaceSection ?? '')
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l.includes('='))
+      .map(l => {
+        const eq = l.indexOf('=')
+        return { from: l.slice(0, eq).trim().toLowerCase(), to: l.slice(eq + 1).trim() }
+      })
+
+    return { prompt, replacements }
   } catch {
-    return ''
+    return { prompt: '', replacements: [] }
   }
 }
 
-export async function transcribeWithEc2Whisper(wavBuffer: Buffer): Promise<string> {
-  const prompt = loadPrompt()
+function applyReplacements(text: string, replacements: Array<{ from: string; to: string }>): string {
+  let result = text
+  for (const { from, to } of replacements) {
+    // Case-insensitive, whole-word-aware replacement, preserves surrounding whitespace
+    result = result.replace(new RegExp(`(?<![\\w])${escapeRegex(from)}(?![\\w])`, 'gi'), to)
+  }
+  return result
+}
 
-  // Build multipart/form-data manually — no fetch FormData in Node.js without extra deps
+function escapeRegex(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+export async function transcribeWithEc2Whisper(wavBuffer: Buffer): Promise<string> {
+  const { prompt, replacements } = loadDictionary()
+
   const boundary = `----aurora${Date.now()}`
   const CRLF = '\r\n'
 
@@ -40,11 +77,7 @@ export async function transcribeWithEc2Whisper(wavBuffer: Buffer): Promise<strin
   ]
 
   if (prompt) {
-    footer.push(
-      `--${boundary}`,
-      'Content-Disposition: form-data; name="prompt"',
-      '', prompt,
-    )
+    footer.push(`--${boundary}`, 'Content-Disposition: form-data; name="prompt"', '', prompt)
   }
 
   footer.push(`--${boundary}--`, '')
@@ -64,5 +97,7 @@ export async function transcribeWithEc2Whisper(wavBuffer: Buffer): Promise<strin
   if (!res.ok) throw new Error(`whisper-server ${res.status}: ${await res.text()}`)
 
   const json = await res.json() as { text?: string }
-  return (json.text ?? '').trim()
+  const raw = (json.text ?? '').trim()
+
+  return replacements.length ? applyReplacements(raw, replacements) : raw
 }
