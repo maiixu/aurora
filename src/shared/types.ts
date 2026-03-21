@@ -11,6 +11,8 @@ export const IPC = {
   HUD_SET_VOLUME: 'hud:setVolume',
   HUD_READY:      'hud:ready',
   SPEECH_AUDIO:   'speech:audio',
+  SPEECH_TEXT:    'speech:text',
+  SPEECH_ERROR:   'speech:error',
 } as const
 
 export interface HudStatePayload  { state: AppState }

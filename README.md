@@ -94,12 +94,25 @@ cloud = Claude
 - `[replace]` section: deterministic post-processing substitutions (applied in order, longer phrases first)
 - Loaded fresh on every transcription — edit anytime, no restart needed
 
-### 6. Run
+### 6. Build and install
+
+```bash
+npm run build
+# → release/mac-arm64/Aurora.app (ad-hoc signed, no security warning)
+```
+
+Copy to Applications and add to Login Items:
+
+```bash
+cp -R release/mac-arm64/Aurora.app /Applications/
+# System Settings → General → Login Items → add Aurora
+```
+
+### 7. Development
 
 ```bash
 npm run dev                    # development (DevTools disabled by default)
 AURORA_DEVTOOLS=1 npm run dev  # enable Chrome DevTools on port 9222
-npm run build                  # production .app
 ```
 
 ## Secrets / what's NOT in this repo
