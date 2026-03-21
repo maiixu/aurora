@@ -1,5 +1,6 @@
 import { AppState } from '../../shared/types'
 import { Animator } from './animator'
+import { startVolumeMeter } from './volume-meter'
 
 const canvas = document.getElementById('hud-canvas') as HTMLCanvasElement
 canvas.width  = 280
@@ -10,15 +11,16 @@ const animator = new Animator(canvas)
 // Signal to main process that HUD is ready
 window.aurora.ready()
 
+// Start volume meter immediately — stays running once mic is granted
+startVolumeMeter((rms) => {
+  animator.setVolume(rms)
+})
+
 // Wire state changes to animator
 window.aurora.onStateChange((state: AppState) => {
   animator.setState(state)
 })
 
-// Volume is computed locally in volume-meter.ts (added in feat/animations)
-// window.aurora.onVolumeChange is available but unused until then
-
-// Declare global type for contextBridge API
 declare global {
   interface Window {
     aurora: {
