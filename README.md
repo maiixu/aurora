@@ -60,15 +60,28 @@ Grant in **System Settings → Privacy & Security**:
 | **Input Monitoring** | Global hotkey via uiohook-napi |
 | **Accessibility** | Paste text into apps via UI scripting |
 
-### 5. Vocabulary (optional)
+### 5. Dictionary
 
-Create `~/.aurora/prompt.txt` with terms whisper should recognise correctly:
+Symlink from dotfiles and edit to taste:
+
+```bash
+mkdir -p ~/.aurora
+ln -sf ~/code/dotfiles/aurora/dictionary.txt ~/.aurora/dictionary.txt
+```
+
+Format (`~/code/dotfiles/aurora/dictionary.txt`):
 
 ```
-Claude, Cursor, Obsidian, TypeScript, Karabiner, macOS, EC2
+Claude, Claude Code, Cursor, Obsidian, TypeScript, Karabiner, macOS, EC2
+
+[replace]
+cloud code = Claude Code
+cloud = Claude
 ```
 
-Whisper uses this as an initial prompt to bias spelling toward these words. Edit anytime — loaded fresh on every transcription.
+- Top section: whisper initial prompt — biases recognition toward these spellings
+- `[replace]` section: deterministic post-processing substitutions (applied in order, longer phrases first)
+- Loaded fresh on every transcription — edit anytime, no restart needed
 
 ### 6. Run
 
@@ -84,6 +97,6 @@ npm run build     # production .app
 | EC2 SSH key | `~/.ssh/` |
 | SSH host config | `~/.ssh/config` |
 | Karabiner config | `~/code/dotfiles/` |
-| Vocabulary prompt | `~/.aurora/prompt.txt` |
+| Dictionary | `~/code/dotfiles/aurora/dictionary.txt` |
 
 No API keys, no passwords, no tokens are stored in this repo.
