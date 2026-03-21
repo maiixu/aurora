@@ -1,4 +1,8 @@
 import { app, session } from 'electron'
+
+// Suppress EPIPE errors when stdout/stderr have no terminal (e.g. launched from Finder)
+process.stdout.on('error', (e: NodeJS.ErrnoException) => { if (e.code !== 'EPIPE') throw e })
+process.stderr.on('error', (e: NodeJS.ErrnoException) => { if (e.code !== 'EPIPE') throw e })
 import { createTray } from './tray'
 import { createHudWindow } from './hud-window'
 import { registerIpcHandlers, wireStateMachineToIpc } from './ipc-handlers'
