@@ -4,9 +4,9 @@ import { HUD_CORNER_MARGIN } from '../shared/constants'
 
 let hudWin: BrowserWindow | null = null
 
-/** Dot size scales with screen height: ~1/50 of screen height, clamped 18–40px */
+/** Dot size scales with screen height: ~1/40 of screen height, clamped 22–48px */
 function dotSize(sh: number): number {
-  return Math.round(Math.min(Math.max(sh / 50, 18), 40))
+  return Math.round(Math.min(Math.max(sh / 40, 22), 48))
 }
 
 export function createHudWindow(): BrowserWindow {

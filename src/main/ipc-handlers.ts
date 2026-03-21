@@ -1,10 +1,10 @@
 import { ipcMain, clipboard } from 'electron'
-import { execSync } from 'child_process'
-import { join } from 'path'
 import { getCapturedFrontApp } from './hotkey'
+import { getPaster } from './pasters'
 import { IPC, AppState } from '../shared/types'
 import { fsm } from './state-machine'
 import { getHudWindow, showHud, hideHud } from './hud-window'
+import { getTrayAnimator } from './tray'
 import { transcribe } from './transcriber'
 
 export function registerIpcHandlers() {
@@ -30,15 +30,7 @@ export function registerIpcHandlers() {
         console.log('[paste] target app:', target)
         setTimeout(() => {
           try {
-            if (target === 'iTerm2') {
-              // iTerm2 intercepts simulated Cmd+V — write directly to the session
-              execSync(`osascript -e 'tell app "iTerm2" to tell current session of current window to write text (do shell script "pbpaste") newline NO'`)
-            } else {
-              // Use CGEventPost (paste-helper) to inject Cmd+V at the HID stream level.
-              // This bypasses the Accessibility API and works for sandboxed apps like Messages.
-              const helperPath = join(__dirname, '../../paste-helper')
-              execSync(helperPath)
-            }
+            getPaster(target).paste(text)
             console.log('[paste] done')
           } catch (e) {
             console.error('[paste] error:', e)
@@ -54,8 +46,9 @@ export function registerIpcHandlers() {
 
 export function broadcastState(state: AppState) {
   const win = getHudWindow()
-  if (!win) return
+  getTrayAnimator()?.setState(state)
 
+  if (!win) return
   if (state === AppState.IDLE) {
     setTimeout(() => hideHud(), 50)
   } else {
