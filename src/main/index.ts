@@ -4,6 +4,8 @@ import { createHudWindow } from './hud-window'
 import { registerIpcHandlers, wireStateMachineToIpc } from './ipc-handlers'
 import { fsm } from './state-machine'
 import { startHotkey, stopHotkey } from './hotkey'
+import { createChatGptWindow, showChatGptForLogin } from './chatgpt-window'
+import { probeSelectors } from './chatgpt-controller'
 import { AppState } from '../shared/types'
 
 // Hide from Dock — menu bar only app
@@ -16,6 +18,8 @@ if (!app.requestSingleInstanceLock()) {
 
 app.whenReady().then(() => {
   createHudWindow()
+  createChatGptWindow()
+  probeSelectors()
   registerIpcHandlers()
   wireStateMachineToIpc()
 
@@ -27,7 +31,7 @@ app.whenReady().then(() => {
       case AppState.CANCELLED:  fsm.cancel(); break
       case AppState.IDLE:       /* auto transitions handle this */ break
     }
-  })
+  }, showChatGptForLogin)
 
   startHotkey()
   console.log('[aurora] ready — menu bar icon active')
