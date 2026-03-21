@@ -32,7 +32,7 @@ Aurora connects via SSH tunnel. Configure your SSH host:
 # Add to ~/.ssh/config:
 Host mac-ec2
   HostName <your-EC2-IP>
-  User ec2-user
+  User <ec2-user|ubuntu|...>
   IdentityFile ~/.ssh/your-key.pem
 ```
 
