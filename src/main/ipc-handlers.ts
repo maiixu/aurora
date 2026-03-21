@@ -25,7 +25,6 @@ export function registerIpcHandlers() {
         }
         console.log('[transcriber] transcript:', text)
         clipboard.writeText(text)
-        updateTrayMenu(undefined, text)
         fsm.textReceived(text)
         const target = getCapturedFrontApp()
         console.log('[paste] target app:', target)

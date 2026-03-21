@@ -33,3 +33,7 @@ export function stopWhisperTunnel(): void {
   tunnelProcess?.kill()
   tunnelProcess = null
 }
+
+export function isTunnelConnected(): boolean {
+  return tunnelProcess !== null
+}

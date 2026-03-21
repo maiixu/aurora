@@ -2,10 +2,10 @@ import { Tray, Menu, app, nativeImage, shell } from 'electron'
 import { join } from 'path'
 import { TrayAnimator } from './tray-animator'
 import { AppState } from '../shared/types'
+import { isTunnelConnected } from './whisper-tunnel'
 
 let tray: Tray | null = null
 let trayAnimator: TrayAnimator | null = null
-let lastTranscript = ''
 let currentState: AppState = AppState.IDLE
 
 export function getTrayAnimator(): TrayAnimator | null { return trayAnimator }
@@ -21,16 +21,13 @@ function stateLabel(s: AppState): string {
 }
 
 function buildMenu(): Electron.Menu {
-  const transcript = lastTranscript
-    ? lastTranscript.length > 48
-      ? lastTranscript.slice(0, 48) + '…'
-      : lastTranscript
-    : '—'
+  const tunnelLabel = isTunnelConnected() ? '● SSH Connected' : '○ SSH Disconnected'
 
   return Menu.buildFromTemplate([
     { label: stateLabel(currentState), enabled: false },
     { type: 'separator' },
-    { label: transcript, enabled: false },
+    { label: tunnelLabel, enabled: false },
+    { label: `Aurora v${app.getVersion()}`, enabled: false },
     { type: 'separator' },
     { label: 'Open Dictionary', click: () => shell.openPath(join(process.env.HOME ?? '~', '.aurora', 'dictionary.txt')) },
     { type: 'separator' },
@@ -38,9 +35,8 @@ function buildMenu(): Electron.Menu {
   ])
 }
 
-export function updateTrayMenu(state?: AppState, transcript?: string) {
+export function updateTrayMenu(state?: AppState) {
   if (state !== undefined) currentState = state
-  if (transcript !== undefined) lastTranscript = transcript
   tray?.setContextMenu(buildMenu())
 }
 
