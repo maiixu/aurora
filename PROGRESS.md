@@ -60,6 +60,22 @@ end tell
 
 ---
 
+## 部署流程
+
+`npm run build` 只生成 `release/mac-arm64/Aurora.app`，不会自动替换 `/Applications/Aurora.app`。
+
+**每次改完代码后用**：
+```bash
+npm run deploy   # = build + kill Aurora + 复制 asar + 重新打开
+```
+
+`update-app` 单独使用（已有 build 产物时）：
+```bash
+npm run update-app
+```
+
+---
+
 ## Whisper 后处理
 
 - whisper.cpp 会输出 `[Music]`、`[Noise]` 等 artifact，用正则过滤。
