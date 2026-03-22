@@ -23,6 +23,12 @@ tell application "System Events"
 end tell
 ```
 
+### Cursor
+
+**问题**：Cursor 是基于 VS Code 的 Electron app，编辑器输入框是 CodeMirror web 层，`keystroke "v" using command down` 无法送达。
+
+**有效方案**：与 Obsidian 同样的 `click menu item "Paste"` 方式。
+
 ### Messages (iMessage)
 
 **问题**：Messages 是沙盒应用，键盘模拟无法送达。

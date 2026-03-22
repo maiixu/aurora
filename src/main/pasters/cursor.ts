@@ -8,7 +8,7 @@ export const cursorPaster: Paster = {
       delay 0.15
       tell application "System Events"
         tell process "Cursor"
-          keystroke "v" using command down
+          click menu item "Paste" of menu 1 of menu bar item "Edit" of menu bar 1
         end tell
       end tell
     '`)
