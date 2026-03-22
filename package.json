@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build && electron-builder",
+    "deploy": "npm run build && npm run update-app",
     "install-app": "codesign --deep --force --sign - release/mac-arm64/Aurora.app && cp -R release/mac-arm64/Aurora.app /Applications/ && echo 'First-time install done. Grant Accessibility + Input Monitoring in System Settings, then run: npm run dev or open Aurora.app'",
     "update-app": "pkill -x Aurora; cp release/mac-arm64/Aurora.app/Contents/Resources/app.asar /Applications/Aurora.app/Contents/Resources/app.asar && cp -R release/mac-arm64/Aurora.app/Contents/Resources/app.asar.unpacked /Applications/Aurora.app/Contents/Resources/app.asar.unpacked && open /Applications/Aurora.app",
     "build:electron": "tsc && vite build",
