@@ -4,7 +4,7 @@ import { app, session } from 'electron'
 process.stdout.on('error', (e: NodeJS.ErrnoException) => { if (e.code !== 'EPIPE') throw e })
 process.stderr.on('error', (e: NodeJS.ErrnoException) => { if (e.code !== 'EPIPE') throw e })
 import { createTray } from './tray'
-import { createHudWindow } from './hud-window'
+import { createHudWindow, watchScreenChanges } from './hud-window'
 import { registerIpcHandlers, wireStateMachineToIpc } from './ipc-handlers'
 import { fsm } from './state-machine'
 import { startHotkey, stopHotkey } from './hotkey'
@@ -30,6 +30,7 @@ app.whenReady().then(() => {
   })
 
   createHudWindow()
+  watchScreenChanges()
   registerIpcHandlers()
   wireStateMachineToIpc()
 

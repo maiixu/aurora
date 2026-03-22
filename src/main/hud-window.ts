@@ -50,6 +50,24 @@ export function getHudWindow(): BrowserWindow | null {
   return hudWin
 }
 
+function repositionHud(): void {
+  if (!hudWin || hudWin.isDestroyed()) return
+  const { width: sw, height: sh } = screen.getPrimaryDisplay().workAreaSize
+  const sz = dotSize(sh)
+  hudWin.setBounds({
+    x: Math.round(sw / 2 - sz / 2),
+    y: sh - sz - HUD_CORNER_MARGIN,
+    width: sz,
+    height: sz,
+  })
+}
+
+export function watchScreenChanges(): void {
+  screen.on('display-added', repositionHud)
+  screen.on('display-removed', repositionHud)
+  screen.on('display-metrics-changed', repositionHud)
+}
+
 export function showHud(): void {
   hudWin?.show()
 }
