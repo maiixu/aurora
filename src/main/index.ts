@@ -9,7 +9,10 @@ import { registerIpcHandlers, wireStateMachineToIpc } from './ipc-handlers'
 import { fsm } from './state-machine'
 import { startHotkey, stopHotkey } from './hotkey'
 import { ensureMicrophoneAccess, ensureAccessibilityAccess } from './permissions'
-import { startWhisperTunnel, stopWhisperTunnel } from './whisper-tunnel'
+import { startWhisperTunnel, stopWhisperTunnel, isTunnelConnected } from './whisper-tunnel'
+import { startLocalWhisper, stopLocalWhisper, localEvents, isSetupComplete } from './whisper-local'
+import { readConfig } from './aurora-config'
+import { updateTrayMenu } from './tray'
 import { AppState } from '../shared/types'
 
 if (process.env.NODE_ENV === 'development' && process.env.AURORA_DEVTOOLS) {
@@ -40,7 +43,28 @@ app.whenReady().then(() => {
   })
   ensureAccessibilityAccess()
 
-  startWhisperTunnel()
+  const cfg = readConfig()
+
+  if (cfg.backend === 'local') {
+    startLocalWhisper()
+  } else {
+    // 'ec2' or 'auto': start EC2 tunnel
+    startWhisperTunnel()
+
+    if (cfg.backend === 'auto' && isSetupComplete()) {
+      // Auto-fallback: if EC2 not connected after 6s, start local whisper
+      setTimeout(() => {
+        if (!isTunnelConnected()) {
+          console.log('[backend] EC2 unavailable, falling back to local whisper')
+          startLocalWhisper()
+        }
+      }, 6000)
+    }
+  }
+
+  // Refresh tray whenever local whisper state changes
+  localEvents.on('stateChange', () => updateTrayMenu())
+
   startHotkey()
   console.log('[aurora] ready')
 })
@@ -48,6 +72,7 @@ app.whenReady().then(() => {
 app.on('will-quit', () => {
   stopHotkey()
   stopWhisperTunnel()
+  stopLocalWhisper()
 })
 
 app.on('window-all-closed', () => {

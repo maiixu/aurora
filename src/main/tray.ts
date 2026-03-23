@@ -3,6 +3,9 @@ import { join } from 'path'
 import { TrayAnimator } from './tray-animator'
 import { AppState } from '../shared/types'
 import { isTunnelConnected } from './whisper-tunnel'
+import { getLocalState, activeModelName, isSetupComplete, startLocalWhisper, stopLocalWhisper } from './whisper-local'
+import { readConfig, writeConfig, BackendMode } from './aurora-config'
+import { startWhisperTunnel, stopWhisperTunnel } from './whisper-tunnel'
 
 let tray: Tray | null = null
 let trayAnimator: TrayAnimator | null = null
@@ -21,13 +24,50 @@ function stateLabel(s: AppState): string {
   }
 }
 
-function buildMenu(): Electron.Menu {
-  const tunnelLabel = isTunnelConnected() ? '🟢  SSH Connected' : '🔴  SSH Disconnected'
+function backendStatusLabel(): string {
+  if (isTunnelConnected()) return '🟢  EC2 Connected'
+  const ls = getLocalState()
+  if (ls === 'ready')   return `🟢  Local (${activeModelName() ?? 'whisper'})`
+  if (ls === 'loading') return '🔄  Loading local model...'
+  if (ls === 'error')   return '🔴  Local Error'
+  return '🔴  No Backend'
+}
 
+function buildBackendSubmenu(): Electron.MenuItemConstructorOptions[] {
+  const cfg = readConfig()
+  const modes: { label: string; mode: BackendMode }[] = [
+    { label: 'Auto (EC2 → Local)', mode: 'auto' },
+    { label: 'EC2 only',           mode: 'ec2'  },
+    { label: 'Local only',         mode: 'local' },
+  ]
+  return modes.map(({ label, mode }) => ({
+    label,
+    type: 'radio' as const,
+    checked: cfg.backend === mode,
+    enabled: mode !== 'local' || isSetupComplete(),
+    click: () => setBackend(mode),
+  }))
+}
+
+function setBackend(mode: BackendMode) {
+  writeConfig({ backend: mode })
+  stopWhisperTunnel()
+  stopLocalWhisper()
+  if (mode === 'local') {
+    startLocalWhisper()
+  } else {
+    startWhisperTunnel()
+  }
+  updateTrayMenu()
+}
+
+function buildMenu(): Electron.Menu {
   return Menu.buildFromTemplate([
     { label: stateLabel(currentState), enabled: false },
     { type: 'separator' },
-    { label: tunnelLabel, enabled: false },
+    { label: backendStatusLabel(), enabled: false },
+    { label: 'Backend', submenu: buildBackendSubmenu() },
+    { type: 'separator' },
     { label: `Aurora v${app.getVersion()}`, enabled: false },
     { type: 'separator' },
     { label: 'Open Dictionary', click: () => shell.openPath(join(process.env.HOME ?? '~', '.aurora', 'dictionary.txt')) },
