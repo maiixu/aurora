@@ -1,3 +1,3 @@
 export interface Paster {
-  paste(text: string): void
+  paste(text: string, appName: string): void
 }

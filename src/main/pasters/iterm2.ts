@@ -6,7 +6,7 @@ import { writeFileSync, unlinkSync } from 'fs'
 import type { Paster } from './types'
 
 export const iterm2Paster: Paster = {
-  paste(text: string) {
+  paste(text: string, _appName: string) {
     const tmp = `/tmp/aurora_paste_${Date.now()}.txt`
     writeFileSync(tmp, text, 'utf-8')
     try {

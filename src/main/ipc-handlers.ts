@@ -52,7 +52,7 @@ export function registerIpcHandlers() {
       console.log('[paste] target app:', target)
       setTimeout(() => {
         try {
-          getPaster(target).paste(full)
+          getPaster(target).paste(full, target)
           console.log('[paste] done')
         } catch (e) {
           console.error('[paste] error:', e)
@@ -73,7 +73,7 @@ export function registerIpcHandlers() {
       const target = getCapturedFrontApp()
       setTimeout(() => {
         try {
-          getPaster(target).paste(full)
+          getPaster(target).paste(full, target)
         } catch (e) {
           console.error('[paste] error:', e)
         }

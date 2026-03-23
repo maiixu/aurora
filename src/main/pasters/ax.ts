@@ -5,10 +5,12 @@ import { execSync } from 'child_process'
 import type { Paster } from './types'
 
 export const axPaster: Paster = {
-  paste(_text: string) {
+  paste(_text: string, appName: string) {
     execSync(`osascript -e '
+      tell application "${appName}" to activate
+      delay 0.25
       tell application "System Events"
-        tell (first process whose frontmost is true)
+        tell process "${appName}"
           click menu item "Paste" of menu 1 of menu bar item "Edit" of menu bar 1
         end tell
       end tell
