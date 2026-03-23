@@ -1,5 +1,5 @@
 import { spawn, execSync, ChildProcess } from 'child_process'
-import { existsSync, readdirSync } from 'fs'
+import { existsSync, readdirSync, writeFileSync, unlinkSync } from 'fs'
 import { join } from 'path'
 import { homedir } from 'os'
 import * as net from 'net'
@@ -7,6 +7,7 @@ import { EventEmitter } from 'events'
 import { readConfig, writeConfig } from './aurora-config'
 
 export const LOCAL_PORT = 18080
+const PID_FILE = join(homedir(), '.aurora', 'whisper-server.pid')
 
 // Binary search order: homebrew first, then source build
 const BINARY_CANDIDATES = [
@@ -103,7 +104,14 @@ export async function startLocalWhisper(): Promise<void> {
 
   setState('loading')  // set before any await so tray shows loading immediately
 
-  // Free port 18080 if held by another process (e.g. stale EC2 tunnel)
+  // Kill orphaned whisper-server from previous force-quit (PID file)
+  try {
+    const { readFileSync } = require('fs') as typeof import('fs')
+    const oldPid = readFileSync(PID_FILE, 'utf-8').trim()
+    execSync(`kill -9 ${oldPid}`, { stdio: 'ignore' })
+  } catch { /* no PID file or already dead */ }
+
+  // Free port 18080 if held by any other process (e.g. stale EC2 tunnel)
   try {
     execSync(`lsof -ti :${LOCAL_PORT} | xargs kill -9`, { stdio: 'ignore' })
     await new Promise(r => setTimeout(r, 500))
@@ -116,8 +124,12 @@ export async function startLocalWhisper(): Promise<void> {
     '-t', '4',
   ], { stdio: 'ignore' })
 
+  // PID file lets us kill orphaned process if Aurora is force-quit (SIGKILL)
+  try { writeFileSync(PID_FILE, String(proc.pid)) } catch { /* ignore */ }
+
   proc.on('exit', (code) => {
     proc = null
+    try { unlinkSync(PID_FILE) } catch { /* ignore */ }
     if (state !== 'stopped') setState('stopped')
     console.log('[whisper-local] process exited, code:', code)
   })
