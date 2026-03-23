@@ -1,5 +1,5 @@
-import { spawn, ChildProcess } from 'child_process'
-import { existsSync } from 'fs'
+import { spawn, execSync, ChildProcess } from 'child_process'
+import { existsSync, readdirSync } from 'fs'
 import { join } from 'path'
 import { homedir } from 'os'
 import * as net from 'net'
@@ -30,13 +30,12 @@ export function findBinary(): string | null {
   return BINARY_CANDIDATES.find(p => existsSync(p)) ?? null
 }
 
-/** Return all .bin model files found in MODELS_DIR */
+/** Return all .bin model stems found in MODELS_DIR */
 export function listModels(): string[] {
   try {
-    const { readdirSync } = require('fs') as typeof import('fs')
     return readdirSync(MODELS_DIR)
-      .filter((f: string) => f.endsWith('.bin'))
-      .map((f: string) => f.replace(/^ggml-/, '').replace(/\.bin$/, ''))
+      .filter(f => f.endsWith('.bin'))
+      .map(f => f.replace(/^ggml-/, '').replace(/\.bin$/, ''))
       .sort()
   } catch { return [] }
 }
@@ -101,6 +100,12 @@ export async function startLocalWhisper(): Promise<void> {
     setState('error')
     return
   }
+
+  // Free port 18080 if held by another process (e.g. stale EC2 tunnel)
+  try {
+    execSync(`lsof -ti :${LOCAL_PORT} | xargs kill -9`, { stdio: 'ignore' })
+    await new Promise(r => setTimeout(r, 500))
+  } catch { /* port was free already */ }
 
   setState('loading')
 
