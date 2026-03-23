@@ -83,6 +83,7 @@ export class TrayAnimator {
         this.startTimer(FRAMES_BREATHING, 50)   // ~20fps breathing
         break
       case AppState.PROCESSING:
+      case AppState.TRANSCRIBING:
         this.startTimer(FRAMES_PROCESSING, 60)
         break
       case AppState.READY:

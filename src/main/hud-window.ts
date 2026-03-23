@@ -1,6 +1,6 @@
 import { BrowserWindow, screen } from 'electron'
 import { join } from 'path'
-import { HUD_CORNER_MARGIN } from '../shared/constants'
+import { HUD_CORNER_MARGIN, TRANSCRIBING_LINE_HEIGHT, TRANSCRIBING_PADDING_V, TRANSCRIBING_MIN_DOT } from '../shared/constants'
 
 let hudWin: BrowserWindow | null = null
 
@@ -74,4 +74,34 @@ export function showHud(): void {
 
 export function hideHud(): void {
   hudWin?.hide()
+}
+
+/** Snap HUD to full TRANSCRIBING panel dimensions (text area + dot). */
+export function resizeForTranscribing(): void {
+  if (!hudWin || hudWin.isDestroyed()) return
+  const { bounds, workAreaSize } = screen.getPrimaryDisplay()
+  const sw = workAreaSize.width
+  const sh = workAreaSize.height
+  // menuBarH = difference between full screen height and work area height
+  const menuBarH = bounds.height - sh
+
+  const panelW = Math.min(Math.round(sh / 40 * 12), 400)
+  const panelH = TRANSCRIBING_MIN_DOT + 2 * TRANSCRIBING_LINE_HEIGHT + 2 * TRANSCRIBING_PADDING_V
+  const x = Math.round(sw / 2 - panelW / 2)
+  const y = Math.max(sh - panelH - HUD_CORNER_MARGIN, menuBarH + 4)
+
+  hudWin.setBounds({ x, y, width: panelW, height: panelH })
+}
+
+/** Restore HUD to its original dot-only size. */
+export function resizeForDot(): void {
+  if (!hudWin || hudWin.isDestroyed()) return
+  const { width: sw, height: sh } = screen.getPrimaryDisplay().workAreaSize
+  const sz = dotSize(sh)
+  hudWin.setBounds({
+    x: Math.round(sw / 2 - sz / 2),
+    y: sh - sz - HUD_CORNER_MARGIN,
+    width: sz,
+    height: sz,
+  })
 }

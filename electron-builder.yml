@@ -1,4 +1,4 @@
-appId: com.aurora.app
+appId: com.maixu.aurora
 productName: Aurora
 directories:
   output: release

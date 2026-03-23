@@ -17,14 +17,13 @@ if (process.env.NODE_ENV === 'development' && process.env.AURORA_DEVTOOLS) {
   app.commandLine.appendSwitch('remote-allow-origins', 'http://localhost:5173')
 }
 
-app.dock?.hide()
-
 if (!app.requestSingleInstanceLock()) {
   app.quit()
   process.exit(0)
 }
 
 app.whenReady().then(() => {
+
   session.defaultSession.setPermissionRequestHandler((_wc, permission, callback) => {
     callback(permission === 'media')
   })

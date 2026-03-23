@@ -5,11 +5,12 @@ import { ANIM_READY_DISPLAY, ANIM_CANCELLED_DISPLAY } from '../shared/constants'
 type Transition = { from: AppState; to: AppState }
 
 const VALID: Record<AppState, AppState[]> = {
-  [AppState.IDLE]:       [AppState.LISTENING],
-  [AppState.LISTENING]:  [AppState.PROCESSING, AppState.CANCELLED],
-  [AppState.PROCESSING]: [AppState.READY, AppState.CANCELLED],
-  [AppState.READY]:      [AppState.IDLE],
-  [AppState.CANCELLED]:  [AppState.IDLE],
+  [AppState.IDLE]:         [AppState.LISTENING],
+  [AppState.LISTENING]:    [AppState.PROCESSING, AppState.CANCELLED],
+  [AppState.PROCESSING]:   [AppState.TRANSCRIBING, AppState.READY, AppState.CANCELLED],
+  [AppState.TRANSCRIBING]: [AppState.READY, AppState.CANCELLED],
+  [AppState.READY]:        [AppState.IDLE],
+  [AppState.CANCELLED]:    [AppState.IDLE],
 }
 
 export class AppStateMachine extends EventEmitter {
@@ -28,6 +29,10 @@ export class AppStateMachine extends EventEmitter {
     this.transition(AppState.PROCESSING)
   }
 
+  startTranscribing() {
+    this.transition(AppState.TRANSCRIBING)
+  }
+
   cancel() {
     this.transition(AppState.CANCELLED)
     this.scheduleAutoIdle(ANIM_CANCELLED_DISPLAY)
@@ -41,7 +46,7 @@ export class AppStateMachine extends EventEmitter {
   }
 
   timeout() {
-    if (this.current === AppState.PROCESSING) {
+    if (this.current === AppState.PROCESSING || this.current === AppState.TRANSCRIBING) {
       this.cancel()
     }
   }

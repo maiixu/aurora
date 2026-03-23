@@ -12,11 +12,12 @@ export function getTrayAnimator(): TrayAnimator | null { return trayAnimator }
 
 function stateLabel(s: AppState): string {
   switch (s) {
-    case AppState.IDLE:       return '⚪  Idle'
-    case AppState.LISTENING:  return '🟢  Listening...'
-    case AppState.PROCESSING: return '🟡  Processing...'
-    case AppState.READY:      return '✅  Done'
-    case AppState.CANCELLED:  return '🔴  Cancelled'
+    case AppState.IDLE:         return '⚪  Idle'
+    case AppState.LISTENING:    return '🟢  Listening...'
+    case AppState.PROCESSING:   return '🟡  Processing...'
+    case AppState.TRANSCRIBING: return '🟡  Transcribing...'
+    case AppState.READY:        return '✅  Done'
+    case AppState.CANCELLED:    return '🔴  Cancelled'
   }
 }
 

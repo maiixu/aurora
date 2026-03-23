@@ -1,4 +1,4 @@
-import { AppState } from '../../shared/types'
+import { AppState, TranscriptionTokenEvent } from '../../shared/types'
 import { Animator } from './animator'
 import { startVolumeMeter } from './volume-meter'
 import { Recorder } from './recorder'
@@ -36,11 +36,23 @@ window.aurora.onStateChange((state: AppState) => {
   }
 })
 
+window.aurora.onToken((event: TranscriptionTokenEvent) => {
+  if (event.type === 'token') {
+    animator.appendToken(event.text)
+  } else if (event.type === 'partial') {
+    // Stream dropped with ≥5 tokens: flag for amber tint; CANCELLED state follows
+    animator.setPartial(true)
+  }
+  // 'done' and 'error' are handled on the main process side;
+  // the state machine transitions (READY / CANCELLED) arrive via onStateChange
+})
+
 declare global {
   interface Window {
     aurora: {
       onStateChange: (cb: (state: AppState) => void) => void
       onVolumeChange: (cb: (level: number) => void) => void
+      onToken: (cb: (event: TranscriptionTokenEvent) => void) => void
       ready:     () => void
       sendAudio: (audio: Uint8Array) => void
       sendText:  (text: string) => void

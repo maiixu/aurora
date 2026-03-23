@@ -2,6 +2,7 @@ import { EC2_WHISPER_PORT } from './whisper-tunnel'
 import { readFileSync } from 'fs'
 import { homedir } from 'os'
 import { join } from 'path'
+import { EventEmitter } from 'events'
 import { postprocess } from './postprocess'
 
 // ~/.aurora/dictionary.txt format:
@@ -44,7 +45,6 @@ function loadDictionary(): Dictionary {
 function applyReplacements(text: string, replacements: Array<{ from: string; to: string }>): string {
   let result = text
   for (const { from, to } of replacements) {
-    // Case-insensitive, whole-word-aware replacement, preserves surrounding whitespace
     result = result.replace(new RegExp(`(?<![\\w])${escapeRegex(from)}(?![\\w])`, 'gi'), to)
   }
   return result
@@ -54,7 +54,16 @@ function escapeRegex(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-export async function transcribeWithEc2Whisper(wavBuffer: Buffer): Promise<string> {
+// transcribeWithEc2Whisper returns an EventEmitter immediately.
+// Events:
+//   'token'  (text: string)  — one streamed segment/chunk from whisper
+//   'done'   (full: string)  — inference complete; full = canonical paste text (post-processed)
+//   'error'  (err: Error)    — fatal error (< 5 tokens received)
+//
+// On SSE stream close without 'done', if ≥5 tokens were received, emits 'done' with
+// accumulated text (partial recovery path → amber HUD state).
+export function transcribeWithEc2Whisper(wavBuffer: Buffer): EventEmitter {
+  const emitter = new EventEmitter()
   const { prompt, replacements } = loadDictionary()
 
   const boundary = `----aurora${Date.now()}`
@@ -89,16 +98,89 @@ export async function transcribeWithEc2Whisper(wavBuffer: Buffer): Promise<strin
     Buffer.from(footer.join(CRLF), 'utf-8'),
   ])
 
-  const res = await fetch(`http://localhost:${EC2_WHISPER_PORT}/inference`, {
-    method: 'POST',
-    headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
-    body,
-  })
+  // Run async streaming in background; emit events to caller
+  ;(async () => {
+    let accumulated = ''
+    let tokenCount = 0
 
-  if (!res.ok) throw new Error(`whisper-server ${res.status}: ${await res.text()}`)
+    try {
+      const res = await fetch(`http://localhost:${EC2_WHISPER_PORT}/inference`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': `multipart/form-data; boundary=${boundary}`,
+          'Accept': 'text/event-stream',
+        },
+        body,
+      })
 
-  const json = await res.json() as { text?: string }
-  const raw = (json.text ?? '').trim()
-  const replaced = replacements.length ? applyReplacements(raw, replacements) : raw
-  return postprocess(replaced)
+      if (!res.ok) {
+        throw new Error(`whisper-server ${res.status}: ${await res.text()}`)
+      }
+
+      if (!res.body) {
+        throw new Error('whisper-server: empty response body')
+      }
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+
+        // Parse SSE lines: split on double newline
+        const events = buffer.split('\n\n')
+        buffer = events.pop() ?? ''  // last (possibly incomplete) chunk stays in buffer
+
+        for (const event of events) {
+          const line = event.trim()
+          if (!line.startsWith('data: ')) continue
+
+          let parsed: { text?: string; done?: boolean; full?: string; error?: string }
+          try {
+            parsed = JSON.parse(line.slice(6))
+          } catch {
+            console.warn('[transcribe-ec2] malformed SSE line:', line)
+            continue
+          }
+
+          if (parsed.error) {
+            throw new Error(`whisper-server SSE error: ${parsed.error}`)
+          }
+
+          if (parsed.done && parsed.full !== undefined) {
+            const full = postprocess(
+              replacements.length ? applyReplacements(parsed.full, replacements) : parsed.full
+            )
+            emitter.emit('done', full)
+            return
+          }
+
+          if (parsed.text !== undefined) {
+            accumulated += parsed.text
+            tokenCount++
+            emitter.emit('token', parsed.text)
+          }
+        }
+      }
+
+      // SSE stream closed without 'done' event
+      if (tokenCount >= 5) {
+        // Partial recovery: paste accumulated text, signal partial=true for amber HUD
+        const full = postprocess(
+          replacements.length ? applyReplacements(accumulated.trim(), replacements) : accumulated.trim()
+        )
+        emitter.emit('partial', full)
+      } else {
+        emitter.emit('error', new Error('SSE stream closed without completion'))
+      }
+    } catch (err) {
+      emitter.emit('error', err instanceof Error ? err : new Error(String(err)))
+    }
+  })()
+
+  return emitter
 }

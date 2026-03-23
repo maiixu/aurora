@@ -1,9 +1,7 @@
-import { uIOhook, UiohookKey } from 'uiohook-napi'
 import { globalShortcut } from 'electron'
 import { execSync } from 'child_process'
 import { fsm } from './state-machine'
 import { AppState } from '../shared/types'
-import { DEFAULT_HOTKEY_CODE } from '../shared/constants'
 
 export function getFrontApp(): string {
   try {
@@ -13,52 +11,26 @@ export function getFrontApp(): string {
   } catch { return '' }
 }
 
-let escRegistered = false
 let capturedFrontApp = ''
 export function getCapturedFrontApp() { return capturedFrontApp }
 
-// Debounce: ignore key-repeat events while held
-let ignoreUntil = 0
-
-function registerEsc() {
-  if (escRegistered) return
-  globalShortcut.register('Escape', () => {
-    const s = fsm.state
-    if (s === AppState.LISTENING || s === AppState.PROCESSING) fsm.cancel()
-  })
-  escRegistered = true
-}
-
-function unregisterEsc() {
-  if (!escRegistered) return
-  globalShortcut.unregister('Escape')
-  escRegistered = false
-}
-
-export function startHotkey(keyCode = DEFAULT_HOTKEY_CODE) {
-  uIOhook.on('keydown', (e) => {
-    if (e.keycode !== keyCode) return
-    const now = Date.now()
-    if (now < ignoreUntil) return   // swallow key-repeat while held
-    ignoreUntil = now + 300
-
+export function startHotkey(key = 'Cmd+Ctrl+Alt+Shift+F13') {
+  const ok = globalShortcut.register(key, () => {
     if (fsm.state === AppState.IDLE) {
       capturedFrontApp = getFrontApp()
       fsm.startListening()
-      registerEsc()
     } else if (fsm.state === AppState.LISTENING) {
       fsm.stopListening()   // → PROCESSING
-      unregisterEsc()
-      registerEsc()         // keep Esc active during PROCESSING
     }
-    // PROCESSING / READY / CANCELLED: ignore extra presses
+    // PROCESSING / TRANSCRIBING / READY / CANCELLED: ignore extra presses
   })
-
-  uIOhook.start()
-  console.log(`[hotkey] listening for keycode ${keyCode} (toggle mode)`)
+  if (!ok) {
+    console.error(`[hotkey] failed to register ${key} — key may be in use by another app`)
+  } else {
+    console.log(`[hotkey] registered ${key} via globalShortcut (toggle mode)`)
+  }
 }
 
 export function stopHotkey() {
-  uIOhook.stop()
-  unregisterEsc()
+  globalShortcut.unregisterAll()
 }
