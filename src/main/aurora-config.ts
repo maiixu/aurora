@@ -8,9 +8,10 @@ export type BackendMode = 'auto' | 'ec2' | 'local'
 
 export interface AuroraConfig {
   backend: BackendMode
+  localModel: string   // model filename stem, e.g. 'large-v3-turbo' or 'large-v3'
 }
 
-const DEFAULTS: AuroraConfig = { backend: 'auto' }
+const DEFAULTS: AuroraConfig = { backend: 'auto', localModel: 'large-v3-turbo' }
 
 export function readConfig(): AuroraConfig {
   try {

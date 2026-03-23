@@ -3,9 +3,22 @@ import { join } from 'path'
 import { TrayAnimator } from './tray-animator'
 import { AppState } from '../shared/types'
 import { isTunnelConnected } from './whisper-tunnel'
-import { getLocalState, activeModelName, isSetupComplete, startLocalWhisper, stopLocalWhisper } from './whisper-local'
+import { getLocalState, activeModelName, listModels, setLocalModel, isSetupComplete, startLocalWhisper, stopLocalWhisper } from './whisper-local'
 import { readConfig, writeConfig, BackendMode } from './aurora-config'
 import { startWhisperTunnel, stopWhisperTunnel } from './whisper-tunnel'
+import { execSync } from 'child_process'
+
+// Cache EC2 model name (detected once via SSH)
+let ec2ModelCache: string | null = null
+function getEc2ModelName(): string {
+  if (ec2ModelCache) return ec2ModelCache
+  try {
+    const ps = execSync('ssh mac-ec2 "ps aux | grep whisper-server | grep -v grep"', { timeout: 3000 }).toString()
+    const m = ps.match(/ggml-([\w-]+)\.bin/)
+    ec2ModelCache = m ? m[1] : 'whisper'
+  } catch { ec2ModelCache = 'whisper' }
+  return ec2ModelCache
+}
 
 let tray: Tray | null = null
 let trayAnimator: TrayAnimator | null = null
@@ -25,7 +38,7 @@ function stateLabel(s: AppState): string {
 }
 
 function backendStatusLabel(): string {
-  if (isTunnelConnected()) return '🟢  EC2 Connected'
+  if (isTunnelConnected()) return `🟢  EC2 (${getEc2ModelName()})`
   const ls = getLocalState()
   if (ls === 'ready')   return `🟢  Local (${activeModelName() ?? 'whisper'})`
   if (ls === 'loading') return '🔄  Loading local model...'
@@ -61,19 +74,47 @@ function setBackend(mode: BackendMode) {
   updateTrayMenu()
 }
 
+function buildModelSubmenu(): Electron.MenuItemConstructorOptions[] {
+  const cfg = readConfig()
+  const models = listModels()
+  if (models.length === 0) return [{ label: 'No models found', enabled: false }]
+  return models.map(stem => ({
+    label: stem,
+    type: 'radio' as const,
+    checked: cfg.localModel === stem,
+    click: () => {
+      setLocalModel(stem)
+      // Restart local whisper with new model if currently running
+      const ls = getLocalState()
+      if (ls === 'ready' || ls === 'loading') {
+        stopLocalWhisper()
+        startLocalWhisper()
+      }
+      updateTrayMenu()
+    },
+  }))
+}
+
 function buildMenu(): Electron.Menu {
-  return Menu.buildFromTemplate([
+  const cfg = readConfig()
+  const showModelMenu = cfg.backend === 'local' || cfg.backend === 'auto'
+  const items: Electron.MenuItemConstructorOptions[] = [
     { label: stateLabel(currentState), enabled: false },
     { type: 'separator' },
     { label: backendStatusLabel(), enabled: false },
     { label: 'Backend', submenu: buildBackendSubmenu() },
-    { type: 'separator' },
+  ]
+  if (showModelMenu) {
+    items.push({ label: 'Local Model', submenu: buildModelSubmenu() })
+  }
+  items.push(
     { label: `Aurora v${app.getVersion()}`, enabled: false },
     { type: 'separator' },
     { label: 'Open Dictionary', click: () => shell.openPath(join(process.env.HOME ?? '~', '.aurora', 'dictionary.txt')) },
     { type: 'separator' },
     { label: 'Quit Aurora', click: () => app.quit() },
-  ])
+  )
+  return Menu.buildFromTemplate(items)
 }
 
 export function updateTrayMenu(state?: AppState) {

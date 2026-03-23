@@ -4,6 +4,7 @@ import { join } from 'path'
 import { homedir } from 'os'
 import * as net from 'net'
 import { EventEmitter } from 'events'
+import { readConfig, writeConfig } from './aurora-config'
 
 export const LOCAL_PORT = 18080
 
@@ -15,13 +16,6 @@ const BINARY_CANDIDATES = [
 ]
 
 const MODELS_DIR = join(homedir(), '.aurora', 'models')
-
-// Prefer turbo (smaller + fast), fall back to large-v3
-const MODEL_PRIORITY = [
-  'ggml-large-v3-turbo.bin',
-  'ggml-large-v3.bin',
-  'ggml-large-v3-turbo-q5_0.bin',
-]
 
 export type LocalState = 'stopped' | 'loading' | 'ready' | 'error'
 
@@ -36,9 +30,30 @@ export function findBinary(): string | null {
   return BINARY_CANDIDATES.find(p => existsSync(p)) ?? null
 }
 
+/** Return all .bin model files found in MODELS_DIR */
+export function listModels(): string[] {
+  try {
+    const { readdirSync } = require('fs') as typeof import('fs')
+    return readdirSync(MODELS_DIR)
+      .filter((f: string) => f.endsWith('.bin'))
+      .map((f: string) => f.replace(/^ggml-/, '').replace(/\.bin$/, ''))
+      .sort()
+  } catch { return [] }
+}
+
+/** Model file path for a given stem (e.g. 'large-v3-turbo') */
+function modelPath(stem: string): string {
+  return join(MODELS_DIR, `ggml-${stem}.bin`)
+}
+
+/** Active model: config preference → first available */
 export function findModel(): string | null {
-  for (const name of MODEL_PRIORITY) {
-    const p = join(MODELS_DIR, name)
+  const cfg = readConfig()
+  const pref = modelPath(cfg.localModel)
+  if (existsSync(pref)) return pref
+  // fallback: first .bin found
+  for (const stem of listModels()) {
+    const p = modelPath(stem)
     if (existsSync(p)) return p
   }
   return null
@@ -47,10 +62,11 @@ export function findModel(): string | null {
 export function activeModelName(): string | null {
   const p = findModel()
   if (!p) return null
-  const name = p.split('/').pop()!
-  if (name.includes('turbo')) return 'turbo'
-  if (name.includes('large-v3')) return 'large-v3'
-  return name
+  return p.split('/').pop()!.replace(/^ggml-/, '').replace(/\.bin$/, '')
+}
+
+export function setLocalModel(stem: string): void {
+  writeConfig({ localModel: stem })
 }
 
 export function isSetupComplete(): boolean {
