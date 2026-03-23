@@ -11,7 +11,7 @@ export interface AuroraConfig {
   localModel: string   // model filename stem, e.g. 'large-v3-turbo' or 'large-v3'
 }
 
-const DEFAULTS: AuroraConfig = { backend: 'auto', localModel: 'large-v3-turbo' }
+const DEFAULTS: AuroraConfig = { backend: 'auto', localModel: 'large-v3' }
 
 export function readConfig(): AuroraConfig {
   try {
