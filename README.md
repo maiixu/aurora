@@ -1,4 +1,4 @@
-# ✨ Aurora
+# ✨ Aurora: Ghost voice injection for macOS
 
 ![Aurora](assets/screenshots/hero.png)
 
