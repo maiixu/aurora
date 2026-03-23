@@ -101,13 +101,13 @@ export async function startLocalWhisper(): Promise<void> {
     return
   }
 
+  setState('loading')  // set before any await so tray shows loading immediately
+
   // Free port 18080 if held by another process (e.g. stale EC2 tunnel)
   try {
     execSync(`lsof -ti :${LOCAL_PORT} | xargs kill -9`, { stdio: 'ignore' })
     await new Promise(r => setTimeout(r, 500))
   } catch { /* port was free already */ }
-
-  setState('loading')
 
   proc = spawn(binary, [
     '-m', model,
