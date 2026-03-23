@@ -53,6 +53,7 @@ declare global {
       onStateChange: (cb: (state: AppState) => void) => void
       onVolumeChange: (cb: (level: number) => void) => void
       onToken: (cb: (event: TranscriptionTokenEvent) => void) => void
+      resizePanel: (lines: number) => void
       ready:     () => void
       sendAudio: (audio: Uint8Array) => void
       sendText:  (text: string) => void

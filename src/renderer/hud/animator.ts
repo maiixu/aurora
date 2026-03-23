@@ -19,8 +19,9 @@ export class Animator {
   private raf: number | null = null
 
   // TRANSCRIBING state
-  private accText  = ''
-  private partial  = false   // true = amber path (stream dropped with ≥5 tokens)
+  private accText   = ''
+  private partial   = false
+  private lineCount = 0   // tracks rendered line count to drive dynamic panel resize
 
   constructor(canvas: HTMLCanvasElement) {
     this.ctx = canvas.getContext('2d')!
@@ -30,6 +31,17 @@ export class Animator {
     this.H = canvas.clientHeight || canvas.height / dpr
     this.CX = this.W / 2
     this.CY = this.H / 2
+
+    // Sync canvas when main process resizes the BrowserWindow
+    window.addEventListener('resize', () => {
+      const d = window.devicePixelRatio || 2
+      const W = window.innerWidth, H = window.innerHeight
+      canvas.width  = W * d; canvas.height = H * d
+      canvas.style.width = W + 'px'; canvas.style.height = H + 'px'
+      this.ctx.scale(d, d)
+      this.W = W; this.H = H; this.CX = W / 2; this.CY = H / 2
+    })
+
     this.loop()
   }
 
@@ -43,11 +55,13 @@ export class Animator {
     if (state === AppState.TRANSCRIBING) {
       this.accText = ''
       this.partial = false
+      this.lineCount = 0
     }
     // On IDLE after TRANSCRIBING/READY, clear accumulated text
     if (state === AppState.IDLE && (prev === AppState.TRANSCRIBING || prev === AppState.READY || prev === AppState.CANCELLED)) {
       this.accText = ''
       this.partial = false
+      this.lineCount = 0
     }
 
     // Update canvas size from the new window dimensions
@@ -228,9 +242,15 @@ export class Animator {
     }
 
     // Wrap accumulated text into lines
-    const lines = this.wrapText(this.accText, W - textX - PADDING_H)
+    const lines = this.wrapText(this.accText, W - textX - PADDING_H * 2)
 
-    // Show only last maxLines lines (top truncation)
+    // Grow the panel when line count increases
+    if (lines.length !== this.lineCount) {
+      this.lineCount = lines.length
+      window.aurora.resizePanel(lines.length)
+    }
+
+    // Show only last maxLines lines (top truncation when capped)
     const displayLines = lines.slice(-maxLines)
 
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
@@ -240,18 +260,31 @@ export class Animator {
   }
 
   private wrapText(text: string, maxWidth: number): string[] {
-    const words = text.split(' ')
     const lines: string[] = []
     let current = ''
 
-    for (const word of words) {
-      const candidate = current ? current + ' ' + word : word
+    // Try adding a chunk; if it overflows, break character-by-character
+    const tryAdd = (chunk: string, separator = '') => {
+      const candidate = current ? current + separator + chunk : chunk
       if (this.ctx.measureText(candidate).width <= maxWidth) {
         current = candidate
-      } else {
-        if (current) lines.push(current)
-        current = word
+        return
       }
+      // chunk itself is too wide → flush current line, then go char-by-char
+      if (current) { lines.push(current); current = '' }
+      for (const ch of chunk) {
+        const c = current + ch
+        if (this.ctx.measureText(c).width <= maxWidth) {
+          current = c
+        } else {
+          if (current) lines.push(current)
+          current = ch
+        }
+      }
+    }
+
+    for (const word of text.split(' ')) {
+      tryAdd(word, current ? ' ' : '')
     }
     if (current) lines.push(current)
     return lines.length ? lines : ['']

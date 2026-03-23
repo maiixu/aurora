@@ -12,6 +12,10 @@ export function registerIpcHandlers() {
     console.log('[ipc] HUD ready')
   })
 
+  ipcMain.on(IPC.HUD_RESIZE, (_event, lines: number) => {
+    resizeForTranscribing(lines)
+  })
+
   // HUD renderer sends WAV audio after recording stops
   ipcMain.on(IPC.SPEECH_AUDIO, (_event, audio: Buffer) => {
     const buf = Buffer.isBuffer(audio) ? audio : Buffer.from(audio)

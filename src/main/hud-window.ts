@@ -76,17 +76,20 @@ export function hideHud(): void {
   hudWin?.hide()
 }
 
-/** Snap HUD to full TRANSCRIBING panel dimensions (text area + dot). */
-export function resizeForTranscribing(): void {
+/** Snap HUD to TRANSCRIBING panel. lines=1 is the minimum; grows dynamically as text arrives. */
+export function resizeForTranscribing(lines = 1): void {
   if (!hudWin || hudWin.isDestroyed()) return
   const { bounds, workAreaSize } = screen.getPrimaryDisplay()
   const sw = workAreaSize.width
   const sh = workAreaSize.height
-  // menuBarH = difference between full screen height and work area height
   const menuBarH = bounds.height - sh
 
-  const panelW = Math.min(Math.round(sh / 40 * 12), 400)
-  const panelH = TRANSCRIBING_MIN_DOT + 2 * TRANSCRIBING_LINE_HEIGHT + 2 * TRANSCRIBING_PADDING_V
+  const panelW = Math.min(Math.round(sh / 40 * 24), 700)
+  const maxH = Math.floor(sh * 0.35)
+  const panelH = Math.min(
+    2 * TRANSCRIBING_PADDING_V + Math.max(1, lines) * TRANSCRIBING_LINE_HEIGHT,
+    maxH
+  )
   const x = Math.round(sw / 2 - panelW / 2)
   const y = Math.max(sh - panelH - HUD_CORNER_MARGIN, menuBarH + 4)
 

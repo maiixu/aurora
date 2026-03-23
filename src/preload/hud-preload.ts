@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('aurora', {
   onToken: (cb: (event: TranscriptionTokenEvent) => void) => {
     ipcRenderer.on(IPC.TRANSCRIPTION_TOKEN, (_event, payload: TranscriptionTokenEvent) => cb(payload))
   },
+  resizePanel: (lines: number) => ipcRenderer.send(IPC.HUD_RESIZE, lines),
   ready:     () => ipcRenderer.send(IPC.HUD_READY),
   sendAudio: (audio: Uint8Array) => ipcRenderer.send(IPC.SPEECH_AUDIO, audio),
   sendText:  (text: string)    => ipcRenderer.send(IPC.SPEECH_TEXT,  { text }),

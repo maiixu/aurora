@@ -15,6 +15,7 @@ export const IPC = {
   SPEECH_TEXT:         'speech:text',
   SPEECH_ERROR:        'speech:error',
   TRANSCRIPTION_TOKEN: 'transcription:token',
+  HUD_RESIZE:          'hud:resize',
 } as const
 
 export interface HudStatePayload { state: AppState }
