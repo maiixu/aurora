@@ -74,27 +74,27 @@ cp models/ggml-large-v3-turbo.bin ~/.aurora/models/
 
 Aurora auto-selects the best available model (prefers `large-v3`). Switch anytime from tray → **Local Model**.
 
-### 5. Backend: EC2 (optional)
+### 5. Backend: Remote whisper via SSH (optional)
 
-For EC2 whisper-server via SSH tunnel:
+Aurora can tunnel to any remote machine running `whisper-server` — an EC2 instance, a Mac mini, a home server, anything reachable via SSH. The remote machine offloads inference entirely; useful when you want to save local RAM or use a more powerful box.
 
 ```bash
 # Generate a dedicated key
 ssh-keygen -t ed25519 -f ~/.ssh/aurora_ec2 -C "aurora@mac"
-ssh-copy-id -i ~/.ssh/aurora_ec2.pub <user>@<ec2-ip>
+ssh-copy-id -i ~/.ssh/aurora_ec2.pub <user>@<remote-host>
 
 # ~/.ssh/config:
-Host mac-ec2
-  HostName <ec2-ip>
+Host mac-ec2          # alias used by Aurora (override with AURORA_SSH_HOST)
+  HostName <ip-or-hostname>
   User <user>
   IdentityFile ~/.ssh/aurora_ec2
 ```
 
-EC2 must run `whisper-server` (whisper.cpp) on port 8080.
+The remote host must run `whisper-server` (whisper.cpp) on port 8080 (override with `AURORA_WHISPER_PORT`). Aurora forwards `localhost:18080 → remote:8080` via SSH tunnel.
 
 ```bash
-export AURORA_SSH_HOST=my-host      # default: mac-ec2
-export AURORA_WHISPER_PORT=9000     # default: 8080
+export AURORA_SSH_HOST=mac-mini     # any SSH config alias
+export AURORA_WHISPER_PORT=9000     # if whisper-server runs on a different port
 ```
 
 ### 6. Backend config
@@ -104,8 +104,8 @@ Aurora's default is **Local only** with `large-v3`. Change in tray → **Backend
 | Mode | Behaviour |
 |---|---|
 | **Local only** | whisper-server runs locally; fully offline |
-| **EC2 only** | SSH tunnel to EC2 whisper-server |
-| **Auto (EC2 → Local)** | tries EC2 first, falls back to local after 6s |
+| **EC2 only** | SSH tunnel to remote whisper-server (EC2, Mac mini, any host) |
+| **Auto (EC2 → Local)** | tries remote first, falls back to local after 6s |
 
 Config stored in `~/.aurora/config.json`.
 
