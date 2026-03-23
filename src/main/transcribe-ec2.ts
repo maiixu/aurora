@@ -121,6 +121,23 @@ export function transcribeWithEc2Whisper(wavBuffer: Buffer): EventEmitter {
         throw new Error('whisper-server: empty response body')
       }
 
+      const contentType = res.headers.get('content-type') ?? ''
+
+      // ── Standard whisper.cpp server: JSON response ─────────────────────
+      if (contentType.includes('application/json')) {
+        const json = await res.json() as { text?: string }
+        const raw = (json.text ?? '').trim()
+        if (!raw) {
+          emitter.emit('error', new Error('whisper-server: empty transcript'))
+          return
+        }
+        const full = postprocess(replacements.length ? applyReplacements(raw, replacements) : raw)
+        emitter.emit('token', full)   // single token so HUD shows something
+        emitter.emit('done', full)
+        return
+      }
+
+      // ── Custom EC2 server: SSE streaming ───────────────────────────────
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
       let buffer = ''
