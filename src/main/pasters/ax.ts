@@ -8,9 +8,9 @@ export const axPaster: Paster = {
   paste(_text: string, appName: string) {
     execSync(`osascript -e '
       tell application "${appName}" to activate
-      delay 0.25
+      delay 0.2
       tell application "System Events"
-        tell process "${appName}"
+        tell (first process whose frontmost is true)
           click menu item "Paste" of menu 1 of menu bar item "Edit" of menu bar 1
         end tell
       end tell
