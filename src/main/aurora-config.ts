@@ -4,11 +4,12 @@ import { homedir } from 'os'
 
 const CONFIG_PATH = join(homedir(), '.aurora', 'config.json')
 
-export type BackendMode = 'auto' | 'ec2' | 'local'
+export type BackendMode = 'auto' | 'ec2' | 'local' | 'openai'
 
 export interface AuroraConfig {
   backend: BackendMode
   localModel: string   // model filename stem, e.g. 'large-v3-turbo' or 'large-v3'
+  openaiApiKey?: string
 }
 
 const DEFAULTS: AuroraConfig = { backend: 'local', localModel: 'large-v3' }

@@ -1,58 +1,7 @@
 import { EC2_WHISPER_PORT } from './whisper-tunnel'
-import { readFileSync } from 'fs'
-import { homedir } from 'os'
-import { join } from 'path'
 import { EventEmitter } from 'events'
 import { postprocess } from './postprocess'
-
-// ~/.aurora/dictionary.txt format:
-//
-//   word1, word2, ...    ← whisper initial prompt (biases recognition)
-//
-//   [replace]            ← optional post-processing substitutions
-//   cloud code = Claude Code
-//   cloud = Claude
-//
-// Replacements are applied in order — put longer phrases before shorter ones.
-
-interface Dictionary {
-  prompt: string
-  replacements: Array<{ from: string; to: string }>
-}
-
-function loadDictionary(): Dictionary {
-  try {
-    const raw = readFileSync(join(homedir(), '.aurora', 'dictionary.txt'), 'utf-8')
-    const [promptSection, replaceSection] = raw.split(/^\[replace\]/m)
-
-    const prompt = (promptSection ?? '').trim()
-
-    const replacements = (replaceSection ?? '')
-      .split('\n')
-      .map(l => l.trim())
-      .filter(l => l.includes('='))
-      .map(l => {
-        const eq = l.indexOf('=')
-        return { from: l.slice(0, eq).trim().toLowerCase(), to: l.slice(eq + 1).trim() }
-      })
-
-    return { prompt, replacements }
-  } catch {
-    return { prompt: '', replacements: [] }
-  }
-}
-
-function applyReplacements(text: string, replacements: Array<{ from: string; to: string }>): string {
-  let result = text
-  for (const { from, to } of replacements) {
-    result = result.replace(new RegExp(`(?<![\\w])${escapeRegex(from)}(?![\\w])`, 'gi'), to)
-  }
-  return result
-}
-
-function escapeRegex(s: string) {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
+import { loadDictionary, applyReplacements } from './dictionary'
 
 // transcribeWithEc2Whisper returns an EventEmitter immediately.
 // Events:

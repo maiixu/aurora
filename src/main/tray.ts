@@ -38,6 +38,8 @@ function stateLabel(s: AppState): string {
 }
 
 function backendStatusLabel(): string {
+  const cfg = readConfig()
+  if (cfg.backend === 'openai') return `🟢  OpenAI Whisper`
   if (isTunnelConnected()) return `🟢  EC2 (${getEc2ModelName()})`
   const ls = getLocalState()
   if (ls === 'ready')   return `🟢  Local (${activeModelName() ?? 'whisper'})`
@@ -52,6 +54,7 @@ function buildBackendSubmenu(): Electron.MenuItemConstructorOptions[] {
     { label: 'Auto (EC2 → Local)', mode: 'auto' },
     { label: 'EC2 only',           mode: 'ec2'  },
     { label: 'Local only',         mode: 'local' },
+    { label: 'OpenAI Whisper API', mode: 'openai' },
   ]
   return modes.map(({ label, mode }) => ({
     label,
@@ -68,7 +71,7 @@ function setBackend(mode: BackendMode) {
   stopLocalWhisper()
   if (mode === 'local') {
     startLocalWhisper()
-  } else {
+  } else if (mode !== 'openai') {
     startWhisperTunnel()
   }
   updateTrayMenu()
@@ -106,6 +109,24 @@ function buildMenu(): Electron.Menu {
   ]
   if (showModelMenu) {
     items.push({ label: 'Local Model', submenu: buildModelSubmenu() })
+  }
+  if (cfg.backend === 'openai') {
+    const hasKey = !!cfg.openaiApiKey
+    items.push({
+      label: hasKey ? 'OpenAI API Key: set ✓' : 'Set OpenAI API Key…',
+      click: () => {
+        try {
+          const result = execSync(
+            `osascript -e 'text returned of (display dialog "Enter OpenAI API Key:" default answer "" with hidden answer)'`,
+            { encoding: 'utf-8' }
+          ).trim()
+          if (result) {
+            writeConfig({ openaiApiKey: result })
+            updateTrayMenu()
+          }
+        } catch { /* user cancelled */ }
+      },
+    })
   }
   items.push(
     { label: `Aurora v${app.getVersion()}`, enabled: false },
