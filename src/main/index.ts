@@ -47,7 +47,7 @@ app.whenReady().then(() => {
 
   if (cfg.backend === 'local') {
     startLocalWhisper()
-  } else {
+  } else if (cfg.backend !== 'openai') {
     // 'ec2' or 'auto': start EC2 tunnel
     startWhisperTunnel()
 

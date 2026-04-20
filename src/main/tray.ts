@@ -115,7 +115,6 @@ function buildMenu(): Electron.Menu {
     items.push({
       label: hasKey ? 'OpenAI API Key: set ✓' : 'Set OpenAI API Key…',
       click: () => {
-        const { execSync } = require('child_process') as typeof import('child_process')
         try {
           const result = execSync(
             `osascript -e 'text returned of (display dialog "Enter OpenAI API Key:" default answer "" with hidden answer)'`,

@@ -26,9 +26,6 @@ export function transcribeWithOpenAI(wavBuffer: Buffer, apiKey: string): EventEm
         `--${boundary}`,
         'Content-Disposition: form-data; name="response_format"',
         '', 'json',
-        `--${boundary}`,
-        'Content-Disposition: form-data; name="language"',
-        '', 'auto',
       ]
 
       if (prompt) {
