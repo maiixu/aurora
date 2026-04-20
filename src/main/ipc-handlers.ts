@@ -5,7 +5,7 @@ import { IPC, AppState, TranscriptionTokenEvent } from '../shared/types'
 import { fsm } from './state-machine'
 import { getHudWindow, showHud, hideHud, resizeForTranscribing, resizeForDot } from './hud-window'
 import { getTrayAnimator, updateTrayMenu } from './tray'
-import { transcribeWithEc2Whisper } from './transcribe-ec2'
+import { transcribe } from './transcriber'
 
 export function registerIpcHandlers() {
   ipcMain.on(IPC.HUD_READY, () => {
@@ -21,7 +21,7 @@ export function registerIpcHandlers() {
     const buf = Buffer.isBuffer(audio) ? audio : Buffer.from(audio)
     console.log('[ipc] received audio', buf.length, 'bytes')
 
-    const emitter = transcribeWithEc2Whisper(buf)
+    const emitter = transcribe(buf)
 
     // Transition to TRANSCRIBING as soon as the SSE connection is established
     // (first token or done event tells us inference has started)
